@@ -1,3 +1,4 @@
+// api/server.js
 const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
@@ -5,69 +6,60 @@ const { PrismaClient } = require('@prisma/client');
 const app = express();
 const prisma = new PrismaClient();
 
-app.use(cors());
+// Permite requisições de outras origens (como o PHP na porta 8000) e libera os métodos HTTP
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+}));
+
 app.use(express.json());
 
 // ==========================================
-// ROTAS GET (Projetos)
+// ROTAS GET & POST (Já existentes)
 // ==========================================
 
-// GET /projetos - Listar todos os projetos
 app.get('/projetos', async (req, res) => {
   try {
-    // Usando prisma.projeto (referência idêntica ao modelo do schema)
-    const projetos = await prisma.projeto.findMany();
+    const projetos = await prisma.projeto.findMany({
+      orderBy: { id: 'desc' } // Mostra os novos primeiro
+    });
     return res.status(200).json(projetos);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'Erro ao buscar projetos no banco.' });
+    return res.status(500).json({ error: 'Erro ao buscar projetos.' });
   }
 });
 
-// GET /projetos/:id - Buscar um projeto por ID
-app.get('/projetos/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const projeto = await prisma.projeto.findUnique({
-      where: { id: Number(id) },
-    });
-
-    if (!projeto) {
-      return res.status(404).json({ error: 'Projeto não encontrado.' });
-    }
-
-    return res.status(200).json(projeto);
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: 'Erro ao buscar projeto.' });
-  }
-});
-
-// ==========================================
-// ROTAS POST (Projetos)
-// ==========================================
-
-// POST /projetos - Criar novo projeto
 app.post('/projetos', async (req, res) => {
   try {
-    const { nome, descricao, status } = req.body;
-
-    if (!nome) {
-      return res.status(400).json({ error: 'O nome do projeto é obrigatório.' });
-    }
+    const { nome, descricao } = req.body;
+    if (!nome) return res.status(400).json({ error: 'Nome é obrigatório.' });
 
     const novoProjeto = await prisma.projeto.create({
-      data: {
-        nome,
-        descricao, // Campo opcional (String?)
-        status,    // Se não for enviado, o Prisma aplicará o default "Pendente"
-      },
+      data: { nome, descricao }
     });
-
     return res.status(201).json(novoProjeto);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'Erro ao salvar projeto no banco.' });
+    return res.status(500).json({ error: 'Erro ao criar projeto.' });
+  }
+});
+
+// ==========================================
+// ROTA DELETE (Nova - Excluir Projeto)
+// ==========================================
+app.delete('/projetos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await prisma.projeto.delete({
+      where: { id: Number(id) }
+    });
+
+    return res.status(200).json({ message: 'Projeto excluído com sucesso!' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Erro ao excluir projeto.' });
   }
 });
 
