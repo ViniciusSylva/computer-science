@@ -1,17 +1,19 @@
 <?php
 // web/index.php
+session_start();
 
-$mensagem = "";
-$tipoMensagem = "";
+$mensagem = $_SESSION['mensagem'] ?? '';
+$tipoMensagem = $_SESSION['tipoMensagem'] ?? '';
 
-// Verifica se o formulário foi enviado via POST
+// Limpa as mensagens da sessão após exibir
+unset($_SESSION['mensagem'], $_SESSION['tipoMensagem']);
+
+// 1. PROCESSA O CADASTRO (POST) VIA PHP / cURL
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome = $_POST['nome'] ?? '';
     $descricao = $_POST['descricao'] ?? '';
 
-    // Validação simples no PHP
     if (!empty($nome)) {
-        // Dados a serem enviados em formato JSON para a API Node.js
         $dadosProjeto = [
             'nome' => $nome,
             'descricao' => $descricao
@@ -19,7 +21,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $payload = json_encode($dadosProjeto);
 
-        // Inicializa o cURL para consumir a rota POST da API Node.js
         $ch = curl_init('http://localhost:3000/projetos');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
@@ -33,19 +34,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
-        // Verifica a resposta da API (201 Created)
         if ($httpCode === 201) {
-            $mensagem = "Projeto enviado e salvo com sucesso no MySQL via Node.js!";
-            $tipoMensagem = "sucesso";
+            $_SESSION['mensagem'] = "Projeto cadastrado com sucesso!";
+            $_SESSION['tipoMensagem'] = "sucesso";
         } else {
-            $mensagem = "Erro ao enviar o projeto. Código de resposta: " . $httpCode;
-            $tipoMensagem = "erro";
+            $_SESSION['mensagem'] = "Erro ao cadastrar projeto. Código HTTP: " . $httpCode;
+            $_SESSION['tipoMensagem'] = "erro";
         }
     } else {
-        $mensagem = "Por favor, preencha o nome do projeto.";
-        $tipoMensagem = "erro";
+        $_SESSION['mensagem'] = "O nome do projeto é obrigatório.";
+        $_SESSION['tipoMensagem'] = "erro";
     }
+
+    // REDIRECIONA PARA EVITAR REENVIO AO DAR REFRESH / F5
+    header('Location: index.php');
+    exit;
 }
+
+// 2. BUSCA A LISTA ATUALIZADA DE PROJETOS (GET) VIA API NODE
+$projetosJson = @file_get_contents('http://localhost:3000/projetos');
+$projetos = $projetosJson ? json_decode($projetosJson, true) : [];
 ?>
 
 <!DOCTYPE html>
@@ -53,84 +61,89 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastrar Projeto</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 500px;
-            margin: 40px auto;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input[type="text"], textarea {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .alerta {
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-        }
-        .sucesso {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .erro {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-    </style>
+    <title>Painel de Projetos</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <h2>Novo Projeto</h2>
+    <!-- FORMULÁRIO DE CADASTRO -->
+    <div class="box">
+        <h2>Cadastrar Novo Projeto</h2>
 
-    <?php if (!empty($mensagem)): ?>
-        <div class="alerta <?= $tipoMensagem ?>">
-            <?= htmlspecialchars($mensagem) ?>
+        <?php if (!empty($mensagem)): ?>
+            <div class="alerta <?= $tipoMensagem ?>">
+                <?= htmlspecialchars($mensagem) ?>
+            </div>
+        <?php endif; ?>
+
+        <form method="POST" action="index.php">
+            <div class="form-group">
+                <label for="nome">Nome do Projeto:*</label>
+                <input type="text" id="nome" name="nome" required>
+            </div>
+
+            <div class="form-group">
+                <label for="descricao">Descrição:</label>
+                <textarea id="descricao" name="descricao" rows="3"></textarea>
+            </div>
+
+            <button type="submit" class="btn-primary">Salvar Projeto</button>
+        </form>
+    </div>
+
+    <!-- LISTA DE PROJETOS -->
+    <div class="box">
+        <h2>Projetos Cadastrados</h2>
+
+        <div id="lista-projetos">
+            <?php if (empty($projetos)): ?>
+                <p id="sem-projetos">Nenhum projeto encontrado.</p>
+            <?php else: ?>
+                <?php foreach ($projetos as $projeto): ?>
+                    <div class="projeto-card" id="projeto-<?= $projeto['id'] ?>">
+                        <div>
+                            <strong><?= htmlspecialchars($projeto['nome']) ?></strong>
+                            <p style="margin: 4px 0 0; color: #666; font-size: 13px;">
+                                <?= htmlspecialchars($projeto['descricao'] ?? 'Sem descrição') ?>
+                            </p>
+                        </div>
+                        <button type="button" class="btn-excluir" onclick="deletarProjeto(event, <?= $projeto['id'] ?>)">Excluir</button>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
-    <?php endif; ?>
+    </div>
 
-    <form method="POST" action="index.php">
-        <div class="form-group">
-            <label for="nome">Nome do Projeto:*</label>
-            <input type="text" id="nome" name="nome" required>
-        </div>
+    <!-- FETCH API PARA EXCLUSÃO -->
+    <script>
+        function deletarProjeto(event, id) {
+            event.preventDefault();
+            
+            console.log("-> Iniciando remoção via Fetch para ID:", id);
 
-        <div class="form-group">
-            <label for="descricao">Descrição:</label>
-            <textarea id="descricao" name="descricao" rows="4"></textarea>
-        </div>
-
-        <button type="submit">Salvar Projeto</button>
-    </form>
-
+            fetch("http://localhost:3000/projetos/" + id, {
+                method: "DELETE"
+            })
+            .then(response => {
+                console.log("-> Status HTTP da API Node:", response.status);
+                
+                if (response.ok) {
+                    // Remove o elemento da tela
+                    const elemento = document.getElementById("projeto-" + id);
+                    if (elemento) {
+                        elemento.style.opacity = "0";
+                        setTimeout(() => elemento.remove(), 300);
+                    }
+                    console.log("-> Elemento removido do DOM!");
+                } else {
+                    alert("Erro " + response.status + " retornado pelo backend.");
+                }
+            })
+            .catch(erro => {
+                console.error("-> Erro na conexão Fetch:", erro);
+                alert("Não foi possível conectar na API Node (Porta 3000).");
+            });
+        }
+    </script>
 </body>
 </html>
