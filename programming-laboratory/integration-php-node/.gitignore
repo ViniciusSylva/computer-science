@@ -1,0 +1,33 @@
+# Dependências do Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# Variáveis de ambiente e credenciais
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Banco de dados local e migrations SQLite (caso utilize)
+*.db
+*.sqlite
+
+# Arquivos gerados pelo Prisma
+/api/node_modules/
+/api/prisma/migrations/dev/
+
+# Configurações do Sistema Operacional e IDEs
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs e arquivos temporários
+*.log
+logs/
+temp/
+tmp/
