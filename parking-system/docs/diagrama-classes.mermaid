@@ -1,0 +1,107 @@
+classDiagram
+    direction TB
+
+    class TipoVeiculo {
+        <<enumeration>>
+        CARRO
+        MOTO
+        CAMINHONETE
+        -descricao : String
+        -multiplicadorTarifa : double
+        +getDescricao() : String
+        +getMultiplicadorTarifa() : double
+    }
+
+    class Veiculo {
+        -placa : String
+        -modelo : String
+        -tipo : TipoVeiculo
+        +Veiculo(placa : String, modelo : String, tipo : TipoVeiculo)
+        +getPlaca() : String
+        +setPlaca(placa : String) : void
+        +getModelo() : String
+        +setModelo(modelo : String) : void
+        +getTipo() : TipoVeiculo
+        +setTipo(tipo : TipoVeiculo) : void
+        +equals(o : Object) : boolean
+        +hashCode() : int
+        +toString() : String
+    }
+
+    class Vaga {
+        -numero : int
+        -tipoPermitido : TipoVeiculo
+        -ocupada : boolean
+        -veiculoEstacionado : Veiculo
+        +Vaga(numero : int, tipoPermitido : TipoVeiculo)
+        +isDisponivel() : boolean
+        +isCompativel(tipo : TipoVeiculo) : boolean
+        +ocupar(veiculo : Veiculo) : void
+        +desocupar() : Veiculo
+        +getNumero() : int
+        +getTipoPermitido() : TipoVeiculo
+        +isOcupada() : boolean
+        +getVeiculoEstacionado() : Veiculo
+        +toString() : String
+    }
+
+    class Ticket {
+        -id : String
+        -veiculo : Veiculo
+        -vaga : Vaga
+        -dataHoraEntrada : LocalDateTime
+        -dataHoraSaida : LocalDateTime
+        -valorCobrado : double
+        -encerrado : boolean
+        +Ticket(id : String, veiculo : Veiculo, vaga : Vaga, entrada : LocalDateTime)
+        +calcularMinutosPermanencia(momentoFinal : LocalDateTime) : long
+        +calcularValor(momentoFinal : LocalDateTime, tarifaBase : double) : double
+        +encerrar(saida : LocalDateTime, tarifaBase : double) : double
+        +getId() : String
+        +getVeiculo() : Veiculo
+        +getVaga() : Vaga
+        +getDataHoraEntrada() : LocalDateTime
+        +getDataHoraSaida() : LocalDateTime
+        +getValorCobrado() : double
+        +isEncerrado() : boolean
+        +getEntradaFormatada() : String
+        +getSaidaFormatada() : String
+        +gerarComprovante() : String
+        +toString() : String
+    }
+
+    class Estacionamento {
+        -nome : String
+        -tarifaBaseHora : double
+        -vagas : List~Vaga~
+        -ticketsAtivos : Map~String, Ticket~
+        -historicoTickets : List~Ticket~
+        -proximoNumeroTicket : int
+        +Estacionamento(nome : String, tarifaBaseHora : double)
+        +adicionarVaga(vaga : Vaga) : void
+        +inicializarVagasPadrao() : void
+        +registrarEntrada(veiculo : Veiculo) : Ticket
+        +registrarEntrada(veiculo : Veiculo, entrada : LocalDateTime) : Ticket
+        +registrarSaida(placa : String) : Ticket
+        +registrarSaida(placa : String, saida : LocalDateTime) : Ticket
+        +consultarVagasDisponiveis() : List~Vaga~
+        +consultarVagasOcupadas() : List~Vaga~
+        +consultarVagasDisponiveisPorTipo(tipo : TipoVeiculo) : List~Vaga~
+        +buscarTicketAtivo(placa : String) : Optional~Ticket~
+        +getFaturamentoTotal() : double
+        +gerarRelatorioOcupacao() : String
+        +getVagas() : List~Vaga~
+        +getTicketsAtivos() : Collection~Ticket~
+        +getHistoricoTickets() : List~Ticket~
+    }
+
+    %% Relacionamentos
+    Veiculo --> "1" TipoVeiculo : possui
+    Vaga --> "1" TipoVeiculo : restrita a
+    Vaga "1" o-- "0..1" Veiculo : abriga
+
+    Ticket --> "1" Veiculo : referencia
+    Ticket --> "1" Vaga : referencia
+
+    Estacionamento "1" *-- "1..*" Vaga : contem
+    Estacionamento "1" *-- "0..*" Ticket : gerencia
