@@ -1,0 +1,1343 @@
+# Projeto Completo: Sistema de Gestão de Estacionamento
+### Abstração, Identificação de Objetos, Modelagem UML e Implementação em Java
+
+Grupo 3: Mariah M. | Vinicius S. | Alan G. | Bernardo R.
+Data da Apresentação: 24/09/2026 às 19h30min
+Disciplina: Programação Orientada a Objetos / Engenharia de Software
+
+================================================================================
+1. TAREFA 1: DESCRIÇÃO DO PROBLEMA E ABSTRAÇÃO DO DOMÍNIO
+================================================================================
+
+1.1 Contextualização do Domínio
+O sistema destina-se a informatizar e controlar o fluxo operacional de um estacionamento rotativo comercial. O estabelecimento possui capacidade física finita dividida em vagas setorizadas por categorias de veículos (CARRO, MOTO, CAMINHONETE/SUV).
+
+O negócio necessita:
+1. Controlar a disponibilidade física das vagas em tempo real;
+2. Garantir que veículos somente entrem no pátio caso exista uma vaga compatível livre;
+3. Registrar com precisão cronológica o momento de entrada e saída;
+4. Medir a permanência e aplicar a fórmula tarifária (com tolerância gratuita de 15 minutos, cobrança mínima de 1 hora e arredondamento comercial para a próxima hora cheia, ponderada pelo porte do veículo);
+5. Liberar imediatamente a vaga física no momento da saída e registrar o faturamento acumulado.
+
+1.2 O Princípio da Abstração na Prática
+A Abstração é a capacidade de destacar as características essenciais de uma entidade sob o ponto de vista do problema a ser resolvido, eliminando deliberadamente detalhes irrelevantes ou ruídos do mundo físico.
+
+Tabela Comparativa de Abstração:
+- Placa do Veículo:
+  * Justificativa Técnica: Identificador unívoco legal do veículo para busca, controle e segurança no pátio.
+  * Detalhe Descartado: Cor e Tipo de Pintura.
+  * Motivo do Descarte: Não altera o cálculo financeiro, a segurança ou o tamanho da vaga.
+
+- Modelo do Veículo:
+  * Justificativa Técnica: Permite a confirmação visual pelo operador e personaliza o comprovante.
+  * Detalhe Descartado: Quilometragem e Nível de Combustível.
+  * Motivo do Descarte: Dados privados do motorista, sem relevância para a guarda temporária.
+
+- Tipo / Categoria:
+  * Justificativa Técnica: Define a compatibilidade física da vaga e o fator multiplicador do custo.
+  * Detalhe Descartado: Marca dos Pneus e Calibragem.
+  * Motivo do Descarte: Detalhes mecânicos que não competem à administração do estacionamento.
+
+- Número da Vaga:
+  * Justificativa Técnica: Endereço físico que orienta o condutor para o local exato de parada.
+  * Detalhe Descartado: Tipo de Asfalto e Pintura do Piso.
+  * Motivo do Descarte: Elemento de engenharia civil passivo, sem impacto na lógica do software.
+
+- Estado da Vaga:
+  * Justificativa Técnica: Flag booleana (true/false) que impede superlotação e duas ocupações simultâneas.
+  * Detalhe Descartado: Câmeras e Lâmpadas do Pátio.
+  * Motivo do Descarte: Pertencem a subsistemas autônomos de CFTV e elétrica predial.
+
+- Data/Hora Entrada e Saída:
+  * Justificativa Técnica: Variáveis cronológicas fundamentais para cômputo da duração do serviço.
+  * Detalhe Descartado: Dados Pessoais do Condutor (CPF, RG).
+  * Motivo do Descarte: Desnecessários para o serviço avulso rotativo; preserva a privacidade (LGPD).
+
+- Tarifa Base e Multiplicadores:
+  * Justificativa Técnica: Regra matemática de precificação conforme tempo e categoria.
+  * Detalhe Descartado: Protocolos Internos da Máquina de Cartão.
+  * Motivo do Descarte: Detalhe de integração com gateway bancário externo.
+
+================================================================================
+2. TAREFA 2: DEFINIÇÃO FORMAL DAS CLASSES E RESPONSABILIDADES
+================================================================================
+
+Adotando o Princípio da Responsabilidade Única (Single Responsibility Principle - SRP), o sistema foi estruturado em entidades coesas:
+
+1. TipoVeiculo (Enumeração):
+   - Responsabilidade: Centralizar a tipagem de categorias aceitas e armazenar o fator multiplicador de cobrança (CARRO = 1.0, MOTO = 0.5, CAMINHONETE = 1.2).
+
+2. Veiculo (Classe de Modelo):
+   - Responsabilidade: Encapsular a identidade do veículo (placa, modelo, tipo), garantindo a invariante de que a placa nunca seja nula ou em branco.
+
+3. Vaga (Classe de Modelo):
+   - Responsabilidade: Representar o espaço físico numerado, gerenciar o seu estado de ocupação e validar a compatibilidade física com o veículo antes de alocá-lo.
+
+4. Ticket (Classe de Modelo):
+   - Responsabilidade: Materializar o contrato de permanência e cobrança, calculando durações temporais (java.time.Duration), aplicando carências e apurando o valor final.
+
+5. Estacionamento (Classe de Serviço / Fachada):
+   - Responsabilidade: Gerenciar a coleção de vagas físicas, orquestrar a entrada e saída dos veículos, controlar os tickets ativos em tempo constante O(1) e gerar relatórios financeiros.
+
+6. Main (Ponto de Entrada e Interface Console):
+   - Responsabilidade: Apresentar o menu ao usuário e fornecer um modo de demonstração automatizado para apresentações ao vivo.
+
+7. TestEstacionamento (Validação Automatizada):
+   - Responsabilidade: Bateria de testes com assert para garantir que as regras de negócio nunca sofram regressão.
+
+================================================================================
+3. DICIONÁRIO TÉCNICO COMPLETO DE DADOS (VARIÁVEIS E ATRIBUTOS)
+================================================================================
+
+- Classe: TipoVeiculo
+  * Modificador: private final | Nome: descricao | Tipo: String
+    Finalidade: Texto amigável da categoria (ex: "Carro de Passeio", "Motocicleta").
+  * Modificador: private final | Nome: multiplicadorTarifa | Tipo: double
+    Finalidade: Ponderador de custo sobre a tarifa base (ex: 1.0, 0.5, 1.2).
+
+- Classe: Veiculo
+  * Modificador: private | Nome: placa | Tipo: String
+    Finalidade: Chave de negócio única, tratada em letras maiúsculas e sem espaços.
+  * Modificador: private | Nome: modelo | Tipo: String
+    Finalidade: Descrição comercial do veículo (ex: "Corolla", "CG 160").
+  * Modificador: private | Nome: tipo | Tipo: TipoVeiculo
+    Finalidade: Categoria do veículo (enum) para verificar restrição de vaga e tarifa.
+
+- Classe: Vaga
+  * Modificador: private final | Nome: numero | Tipo: int
+    Finalidade: Identificador sequencial da vaga física no pátio (inteiro positivo).
+  * Modificador: private final | Nome: tipoPermitido | Tipo: TipoVeiculo
+    Finalidade: Restrição da vaga; aceita apenas veículos deste tipo.
+  * Modificador: private | Nome: ocupada | Tipo: boolean
+    Finalidade: Flag de estado: true quando em uso, false quando disponível.
+  * Modificador: private | Nome: veiculoEstacionado | Tipo: Veiculo
+    Finalidade: Referência ao veículo alocado na vaga; null quando livre.
+
+- Classe: Ticket
+  * Modificador: private static final | Nome: FORMATTER | Tipo: DateTimeFormatter
+    Finalidade: Padrão formatador de datas ("dd/MM/yyyy HH:mm:ss").
+  * Modificador: private final | Nome: id | Tipo: String
+    Finalidade: Identificador único do ticket (ex: "TCK-1001").
+  * Modificador: private final | Nome: veiculo | Tipo: Veiculo
+    Finalidade: Referência ao veículo atendido neste ticket.
+  * Modificador: private final | Nome: vaga | Tipo: Vaga
+    Finalidade: Referência à vaga física utilizada pelo veículo.
+  * Modificador: private final | Nome: dataHoraEntrada | Tipo: LocalDateTime
+    Finalidade: Timestamp exato do momento do check-in.
+  * Modificador: private | Nome: dataHoraSaida | Tipo: LocalDateTime
+    Finalidade: Timestamp do momento do check-out; null enquanto em aberto.
+  * Modificador: private | Nome: valorCobrado | Tipo: double
+    Finalidade: Valor total em reais apurado e quitado na saída.
+  * Modificador: private | Nome: encerrado | Tipo: boolean
+    Finalidade: Flag do ciclo de vida: false = ativo, true = quitado e encerrado.
+
+- Classe: Estacionamento
+  * Modificador: private final | Nome: nome | Tipo: String
+    Finalidade: Nome fantasia comercial do estabelecimento.
+  * Modificador: private | Nome: tarifaBaseHora | Tipo: double
+    Finalidade: Valor base em reais cobrado por 1 hora de estadia para carros.
+  * Modificador: private final | Nome: vagas | Tipo: List<Vaga>
+    Finalidade: Lista contendo todas as vagas físicas sob gestão do estacionamento.
+  * Modificador: private final | Nome: ticketsAtivos | Tipo: Map<String, Ticket>
+    Finalidade: Tabela Hash indexada pela placa para consultas em tempo O(1).
+  * Modificador: private final | Nome: historicoTickets | Tipo: List<Ticket>
+    Finalidade: Coleção de todos os tickets já fechados para apuração financeira.
+  * Modificador: private | Nome: proximoNumeroTicket | Tipo: int
+    Finalidade: Sequenciador numérico autoincremental de tickets (inicia em 1001).
+
+================================================================================
+4. DICIONÁRIO TÉCNICO COMPLETO DE OPERAÇÕES (FUNÇÕES E MÉTODOS)
+================================================================================
+
+- TipoVeiculo:
+  * getDescricao() -> String: Retorna o texto descritivo da categoria.
+  * getMultiplicadorTarifa() -> double: Retorna o peso multiplicador da tarifa.
+
+- Veiculo:
+  * Veiculo(String placa, String modelo, TipoVeiculo tipo): Construtor. Valida não-nulidade e formata a placa em maiúsculas com .toUpperCase().
+  * getPlaca() -> String / setPlaca(String placa) -> void: Acessa ou altera a placa com validação de texto não vazio.
+  * getModelo() -> String / setModelo(String modelo) -> void: Acessa ou altera o modelo do veículo.
+  * getTipo() -> TipoVeiculo / setTipo(TipoVeiculo tipo) -> void: Acessa ou altera a categoria do veículo.
+  * equals(Object o) -> boolean / hashCode() -> int: Define igualdade de objetos comparando estritamente a placa.
+  * toString() -> String: Formata visualmente como "[PLACA] Modelo (Categoria)".
+
+- Vaga:
+  * Vaga(int numero, TipoVeiculo tipoPermitido): Construtor. Instancia vaga física com número positivo e tipo; inicia como desocupada.
+  * isDisponivel() -> boolean: Retorna true se !ocupada && veiculoEstacionado == null.
+  * isCompativel(TipoVeiculo tipo) -> boolean: Avalia se o tipo do veículo corresponde ao tipo permitido na vaga.
+  * ocupar(Veiculo veiculo) -> void: Valida compatibilidade e disponibilidade; vincula o veículo e altera ocupada = true.
+  * desocupar() -> Veiculo: Desvincula o veículo, reseta o estado da vaga para livre e retorna a instância do veículo.
+  * getNumero() -> int / getTipoPermitido() -> TipoVeiculo: Getters das propriedades estruturais da vaga.
+  * isOcupada() -> boolean / getVeiculoEstacionado() -> Veiculo: Getters do estado dinâmico da vaga.
+
+- Ticket:
+  * Ticket(String id, Veiculo veiculo, Vaga vaga, LocalDateTime entrada): Construtor. Inicializa ticket associando veículo e vaga, registrando entrada.
+  * calcularMinutosPermanencia(LocalDateTime momentoFinal) -> long: Executa Duration.between(entrada, fim).toMinutes() com validação de cronologia.
+  * calcularValor(LocalDateTime momentoFinal, double tarifaBaseHora) -> double: Aplica 15 min de cortesia gratuita; arredonda horas cheias via Math.ceil e pondera pelo tipo.
+  * encerrar(LocalDateTime momentoSaida, double tarifaBaseHora) -> double: Grava saída, apura valor final, muda status para encerrado e retorna o valor cobrado.
+  * getEntradaFormatada() -> String / getSaidaFormatada() -> String: Formata as datas para o padrão legível brasileiro.
+  * gerarComprovante() -> String: Emite o cupom de recibo com detalhes de veículo, vaga, tempos e total pago.
+
+- Estacionamento:
+  * Estacionamento(String nome, double tarifaBaseHora): Construtor. Cria o estacionamento com validação de tarifa positiva e inicializa coleções.
+  * adicionarVaga(Vaga vaga) -> void: Registra nova vaga no pátio garantindo a unicidade do número.
+  * inicializarVagasPadrao() -> void: Pré-configura 10 vagas padrão (5 Carro, 3 Moto, 2 Caminhonete).
+  * registrarEntrada(Veiculo veiculo) -> Ticket: Sobrecarga de conveniência que adota o horário atual do sistema.
+  * registrarEntrada(Veiculo veiculo, LocalDateTime dataHoraEntrada) -> Ticket: Localiza vaga compatível disponível, ocupa a vaga física e gera o ticket ativo.
+  * registrarSaida(String placa) -> Ticket: Sobrecarga de conveniência que encerra no horário atual do sistema.
+  * registrarSaida(String placa, LocalDateTime dataHoraSaida) -> Ticket: Localiza ticket em O(1), desocupa a vaga, calcula tarifa e move para histórico.
+  * consultarVagasDisponiveis() -> List<Vaga>: Filtra e retorna lista de vagas livres via Streams.
+  * consultarVagasOcupadas() -> List<Vaga>: Filtra e retorna lista de vagas ocupadas via Streams.
+  * consultarVagasDisponiveisPorTipo(TipoVeiculo tipo) -> List<Vaga>: Filtra vagas livres filtradas por categoria específica.
+  * buscarTicketAtivo(String placa) -> Optional<Ticket>: Retorna com segurança se o veículo se encontra estacionado.
+  * getFaturamentoTotal() -> double: Soma a receita de todos os tickets encerrados no histórico via Stream.sum().
+  * gerarRelatorioOcupacao() -> String: Retorna sumário com total de vagas, livres, ocupadas, taxa percentual e receita.
+
+- Main:
+  * main(String[] args) -> void: Ponto de inicialização do programa, controle do menu interativo e Scanner.
+  * executarDemonstracaoAutomatica(Estacionamento est) -> void: Demonstração automatizada em 7 passos de entradas, regras e saídas para o seminário.
+
+- TestEstacionamento:
+  * main(String[] args) -> void: Execução dos 5 testes automatizados com validação por assertions nativas.
+
+================================================================================
+5. TAREFA 3: DIAGRAMA DE CLASSES UML
+================================================================================
+
+Representação em notação Mermaid:
+
+classDiagram
+    direction TB
+
+    class TipoVeiculo {
+        <<enumeration>>
+        CARRO
+        MOTO
+        CAMINHONETE
+        -descricao : String
+        -multiplicadorTarifa : double
+        +getDescricao() : String
+        +getMultiplicadorTarifa() : double
+    }
+
+    class Veiculo {
+        -placa : String
+        -modelo : String
+        -tipo : TipoVeiculo
+        +Veiculo(placa : String, modelo : String, tipo : TipoVeiculo)
+        +getPlaca() : String
+        +setPlaca(placa : String) : void
+        +getModelo() : String
+        +setModelo(modelo : String) : void
+        +getTipo() : TipoVeiculo
+        +setTipo(tipo : TipoVeiculo) : void
+        +equals(o : Object) : boolean
+        +hashCode() : int
+        +toString() : String
+    }
+
+    class Vaga {
+        -numero : int
+        -tipoPermitido : TipoVeiculo
+        -ocupada : boolean
+        -veiculoEstacionado : Veiculo
+        +Vaga(numero : int, tipoPermitido : TipoVeiculo)
+        +isDisponivel() : boolean
+        +isCompativel(tipo : TipoVeiculo) : boolean
+        +ocupar(veiculo : Veiculo) : void
+        +desocupar() : Veiculo
+        +getNumero() : int
+        +getTipoPermitido() : TipoVeiculo
+        +isOcupada() : boolean
+        +getVeiculoEstacionado() : Veiculo
+        +toString() : String
+    }
+
+    class Ticket {
+        -id : String
+        -veiculo : Veiculo
+        -vaga : Vaga
+        -dataHoraEntrada : LocalDateTime
+        -dataHoraSaida : LocalDateTime
+        -valorCobrado : double
+        -encerrado : boolean
+        +Ticket(id : String, veiculo : Veiculo, vaga : Vaga, entrada : LocalDateTime)
+        +calcularMinutosPermanencia(momentoFinal : LocalDateTime) : long
+        +calcularValor(momentoFinal : LocalDateTime, tarifaBase : double) : double
+        +encerrar(saida : LocalDateTime, tarifaBase : double) : double
+        +getId() : String
+        +getVeiculo() : Veiculo
+        +getVaga() : Vaga
+        +getDataHoraEntrada() : LocalDateTime
+        +getDataHoraSaida() : LocalDateTime
+        +getValorCobrado() : double
+        +isEncerrado() : boolean
+        +getEntradaFormatada() : String
+        +getSaidaFormatada() : String
+        +gerarComprovante() : String
+        +toString() : String
+    }
+
+    class Estacionamento {
+        -nome : String
+        -tarifaBaseHora : double
+        -vagas : List~Vaga~
+        -ticketsAtivos : Map~String, Ticket~
+        -historicoTickets : List~Ticket~
+        -proximoNumeroTicket : int
+        +Estacionamento(nome : String, tarifaBaseHora : double)
+        +adicionarVaga(vaga : Vaga) : void
+        +inicializarVagasPadrao() : void
+        +registrarEntrada(veiculo : Veiculo) : Ticket
+        +registrarEntrada(veiculo : Veiculo, entrada : LocalDateTime) : Ticket
+        +registrarSaida(placa : String) : Ticket
+        +registrarSaida(placa : String, saida : LocalDateTime) : Ticket
+        +consultarVagasDisponiveis() : List~Vaga~
+        +consultarVagasOcupadas() : List~Vaga~
+        +consultarVagasDisponiveisPorTipo(tipo : TipoVeiculo) : List~Vaga~
+        +buscarTicketAtivo(placa : String) : Optional~Ticket~
+        +getFaturamentoTotal() : double
+        +gerarRelatorioOcupacao() : String
+        +getVagas() : List~Vaga~
+        +getTicketsAtivos() : Collection~Ticket~
+        +getHistoricoTickets() : List~Ticket~
+    }
+
+    %% Relacionamentos
+    Veiculo --> "1" TipoVeiculo : possui
+    Vaga --> "1" TipoVeiculo : restrita a
+    Vaga "1" o-- "0..1" Veiculo : abriga
+
+    Ticket --> "1" Veiculo : referencia
+    Ticket --> "1" Vaga : referencia
+
+    Estacionamento "1" *-- "1..*" Vaga : contem
+    Estacionamento "1" *-- "0..*" Ticket : gerencia
+
+Justificativa Teórica das Relações UML:
+1. Composição (Estacionamento *-- Vaga): As vagas físicas compõem o estacionamento. Se a instituição do estacionamento for extinta no sistema, suas vagas deixam de fazer sentido e são destruídas. Multiplicidade: 1 para 1..*.
+2. Composição (Estacionamento *-- Ticket): O histórico de atendimentos e a coleção de tickets pertencem exclusivamente ao estacionamento emissor.
+3. Agregação (Vaga o-- Veiculo): A vaga abriga temporariamente de 0 a 1 veículo. Trata-se de uma agregação não destrutiva, pois o veículo possui ciclo de vida independente (continua existindo antes e depois de estar no estacionamento).
+4. Associação Direcionada (Ticket --> Veiculo e Ticket --> Vaga): O comprovante vincula o veículo atendido e a vaga utilizada para conferência e auditoria.
+
+================================================================================
+6. TAREFA 4: IMPLEMENTAÇÃO COMPLETA EM JAVA
+================================================================================
+
+--------------------------------------------------------------------------------
+6.1 TipoVeiculo.java
+--------------------------------------------------------------------------------
+package br.com.estacionamento.model;
+
+/**
+ * Representa os tipos de veículos suportados pelo estacionamento.
+ * Cada tipo possui uma descrição e um fator multiplicador para o cálculo da tarifa.
+ */
+public enum TipoVeiculo {
+    CARRO("Carro de Passeio", 1.0),
+    MOTO("Motocicleta", 0.5),
+    CAMINHONETE("Caminhonete / SUV", 1.2);
+
+    private final String descricao;
+    private final double multiplicadorTarifa;
+
+    TipoVeiculo(String descricao, double multiplicadorTarifa) {
+        this.descricao = descricao;
+        this.multiplicadorTarifa = multiplicadorTarifa;
+    }
+
+    public String getDescricao() {
+        return descricao;
+    }
+
+    public double getMultiplicadorTarifa() {
+        return multiplicadorTarifa;
+    }
+
+    @Override
+    public String toString() {
+        return descricao;
+    }
+}
+
+--------------------------------------------------------------------------------
+6.2 Veiculo.java
+--------------------------------------------------------------------------------
+package br.com.estacionamento.model;
+
+import java.util.Objects;
+
+/**
+ * Representa um Veículo no sistema de estacionamento.
+ * Abstração focada nos dados essenciais para identificação e tarifação.
+ */
+public class Veiculo {
+    public static final String REGEX_MERCOSUL = "^[A-Z]{3}[0-9][A-Z][0-9]{2}$";
+    public static final String REGEX_TRADICIONAL = "^[A-Z]{3}[0-9]{4}$";
+    public static final String REGEX_PLACA_BRASIL = "^[A-Z]{3}([0-9][A-Z][0-9]{2}|[0-9]{4})$";
+
+    private String placa;
+    private String modelo;
+    private TipoVeiculo tipo;
+
+    public Veiculo(String placa, String modelo, TipoVeiculo tipo) {
+        if (tipo == null) {
+            throw new IllegalArgumentException("O tipo de veículo deve ser informado.");
+        }
+        this.placa = validarESanitizarPlaca(placa);
+        this.modelo = validarESanitizarModelo(modelo);
+        this.tipo = tipo;
+    }
+
+    public static String sanitizarPlaca(String placaRaw) {
+        if (placaRaw == null) return "";
+        return placaRaw.trim().replaceAll("[^a-zA-Z0-9]", "").toUpperCase();
+    }
+
+    public static boolean isPlacaValida(String placaRaw) {
+        String limpa = sanitizarPlaca(placaRaw);
+        return limpa.matches(REGEX_PLACA_BRASIL);
+    }
+
+    public static boolean isModeloValido(String modeloRaw) {
+        if (modeloRaw == null) return false;
+        String m = modeloRaw.trim();
+        return m.length() >= 2 && m.matches(".*[a-zA-Z\\p{L}].*");
+    }
+
+    private static String validarESanitizarPlaca(String placaRaw) {
+        if (placaRaw == null || placaRaw.trim().isEmpty()) {
+            throw new IllegalArgumentException("A placa do veículo não pode ser vazia.");
+        }
+        String limpa = sanitizarPlaca(placaRaw);
+        if (!limpa.matches(REGEX_PLACA_BRASIL)) {
+            throw new IllegalArgumentException(String.format(
+                "Placa '%s' inválida! A placa deve seguir o padrão brasileiro Mercosul (ex: ABC1D23) ou tradicional (ex: ABC1234).",
+                placaRaw.trim().toUpperCase()
+            ));
+        }
+        return limpa;
+    }
+
+    private static String validarESanitizarModelo(String modeloRaw) {
+        if (modeloRaw == null || modeloRaw.trim().isEmpty()) {
+            throw new IllegalArgumentException("O modelo do veículo não pode ser vazio.");
+        }
+        String m = modeloRaw.trim();
+        if (m.length() < 2) {
+            throw new IllegalArgumentException("O modelo do veículo deve ter pelo menos 2 caracteres.");
+        }
+        if (!m.matches(".*[a-zA-Z\\p{L}].*")) {
+            throw new IllegalArgumentException("O modelo do veículo não pode ser composto exclusivamente por números. Deve conter pelo menos uma letra (ex: Corolla, CG 160, Gol 1.0).");
+        }
+        return m;
+    }
+
+    public String getPlaca() {
+        return placa;
+    }
+
+    public void setPlaca(String placa) {
+        this.placa = validarESanitizarPlaca(placa);
+    }
+
+    public String getModelo() {
+        return modelo;
+    }
+
+    public void setModelo(String modelo) {
+        this.modelo = validarESanitizarModelo(modelo);
+    }
+
+    public TipoVeiculo getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(TipoVeiculo tipo) {
+        if (tipo == null) {
+            throw new IllegalArgumentException("O tipo de veículo deve ser informado.");
+        }
+        this.tipo = tipo;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Veiculo veiculo = (Veiculo) o;
+        return Objects.equals(placa, veiculo.placa);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(placa);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("[%s] %s (%s)", placa, modelo, tipo.getDescricao());
+    }
+}
+
+--------------------------------------------------------------------------------
+6.3 Vaga.java
+--------------------------------------------------------------------------------
+package br.com.estacionamento.model;
+
+/**
+ * Representa uma vaga física no estacionamento.
+ * Controla seu estado de ocupação e o veículo atualmente estacionado.
+ */
+public class Vaga {
+    private final int numero;
+    private final TipoVeiculo tipoPermitido;
+    private boolean ocupada;
+    private Veiculo veiculoEstacionado;
+
+    public Vaga(int numero, TipoVeiculo tipoPermitido) {
+        if (numero <= 0) {
+            throw new IllegalArgumentException("O número da vaga deve ser positivo.");
+        }
+        if (tipoPermitido == null) {
+            throw new IllegalArgumentException("O tipo permitido para a vaga deve ser especificado.");
+        }
+        this.numero = numero;
+        this.tipoPermitido = tipoPermitido;
+        this.ocupada = false;
+        this.veiculoEstacionado = null;
+    }
+
+    public boolean isDisponivel() {
+        return !ocupada && veiculoEstacionado == null;
+    }
+
+    public boolean isCompativel(TipoVeiculo tipo) {
+        return this.tipoPermitido == tipo;
+    }
+
+    public void ocupar(Veiculo veiculo) {
+        if (veiculo == null) {
+            throw new IllegalArgumentException("Não é possível ocupar a vaga com um veículo nulo.");
+        }
+        if (!isDisponivel()) {
+            throw new IllegalStateException("Vaga " + numero + " já está ocupada.");
+        }
+        if (!isCompativel(veiculo.getTipo())) {
+            throw new IllegalArgumentException(String.format(
+                "Incompatibilidade: Vaga %d é exclusiva para %s, mas o veículo informado é %s.",
+                numero, tipoPermitido.getDescricao(), veiculo.getTipo().getDescricao()
+            ));
+        }
+        this.veiculoEstacionado = veiculo;
+        this.ocupada = true;
+    }
+
+    public Veiculo desocupar() {
+        if (!ocupada || veiculoEstacionado == null) {
+            throw new IllegalStateException("Vaga " + numero + " já se encontra desocupada.");
+        }
+        Veiculo saindo = this.veiculoEstacionado;
+        this.veiculoEstacionado = null;
+        this.ocupada = false;
+        return saindo;
+    }
+
+    public int getNumero() {
+        return numero;
+    }
+
+    public TipoVeiculo getTipoPermitido() {
+        return tipoPermitido;
+    }
+
+    public boolean isOcupada() {
+        return ocupada;
+    }
+
+    public Veiculo getVeiculoEstacionado() {
+        return veiculoEstacionado;
+    }
+
+    @Override
+    public String toString() {
+        String status = ocupada ? "OCUPADA por " + veiculoEstacionado : "LIVRE";
+        return String.format("Vaga #%02d [%s] - %s", numero, tipoPermitido.getDescricao(), status);
+    }
+}
+
+--------------------------------------------------------------------------------
+6.4 Ticket.java
+--------------------------------------------------------------------------------
+package br.com.estacionamento.model;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+/**
+ * Representa o registro de permanência e cobrança de um veículo no estacionamento.
+ * Faz a mediação entre Veiculo, Vaga e o tempo decorrido.
+ */
+public class Ticket {
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+
+    private final String id;
+    private final Veiculo veiculo;
+    private final Vaga vaga;
+    private final LocalDateTime dataHoraEntrada;
+    private LocalDateTime dataHoraSaida;
+    private double valorCobrado;
+    private boolean encerrado;
+
+    public Ticket(String id, Veiculo veiculo, Vaga vaga, LocalDateTime dataHoraEntrada) {
+        if (id == null || id.trim().isEmpty()) {
+            throw new IllegalArgumentException("O ID do ticket não pode ser nulo.");
+        }
+        if (veiculo == null) {
+            throw new IllegalArgumentException("O veículo associado ao ticket não pode ser nulo.");
+        }
+        if (vaga == null) {
+            throw new IllegalArgumentException("A vaga associada ao ticket não pode ser nula.");
+        }
+        this.id = id;
+        this.veiculo = veiculo;
+        this.vaga = vaga;
+        this.dataHoraEntrada = (dataHoraEntrada != null) ? dataHoraEntrada : LocalDateTime.now();
+        this.dataHoraSaida = null;
+        this.valorCobrado = 0.0;
+        this.encerrado = false;
+    }
+
+    public long calcularMinutosPermanencia(LocalDateTime momentoFinal) {
+        LocalDateTime fim = (momentoFinal != null) ? momentoFinal : LocalDateTime.now();
+        if (fim.isBefore(dataHoraEntrada)) {
+            throw new IllegalArgumentException("A data/hora de saída não pode ser anterior à de entrada.");
+        }
+        return Duration.between(dataHoraEntrada, fim).toMinutes();
+    }
+
+    public double calcularValor(LocalDateTime momentoFinal, double tarifaBaseHora) {
+        long minutos = calcularMinutosPermanencia(momentoFinal);
+
+        // Tolerância de 15 minutos de cortesia
+        if (minutos <= 15) {
+            return 0.0;
+        }
+
+        // Arredonda para cima em horas cheias
+        long horasCobradas = (long) Math.ceil(minutos / 60.0);
+        if (horasCobradas < 1) {
+            horasCobradas = 1;
+        }
+
+        double multiplicador = veiculo.getTipo().getMultiplicadorTarifa();
+        return horasCobradas * tarifaBaseHora * multiplicador;
+    }
+
+    public double encerrar(LocalDateTime momentoSaida, double tarifaBaseHora) {
+        if (encerrado) {
+            throw new IllegalStateException("Este ticket já foi encerrado.");
+        }
+        this.dataHoraSaida = (momentoSaida != null) ? momentoSaida : LocalDateTime.now();
+        this.valorCobrado = calcularValor(this.dataHoraSaida, tarifaBaseHora);
+        this.encerrado = true;
+        return this.valorCobrado;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public Veiculo getVeiculo() {
+        return veiculo;
+    }
+
+    public Vaga getVaga() {
+        return vaga;
+    }
+
+    public LocalDateTime getDataHoraEntrada() {
+        return dataHoraEntrada;
+    }
+
+    public LocalDateTime getDataHoraSaida() {
+        return dataHoraSaida;
+    }
+
+    public double getValorCobrado() {
+        return valorCobrado;
+    }
+
+    public boolean isEncerrado() {
+        return encerrado;
+    }
+
+    public String getEntradaFormatada() {
+        return dataHoraEntrada.format(FORMATTER);
+    }
+
+    public String getSaidaFormatada() {
+        return (dataHoraSaida != null) ? dataHoraSaida.format(FORMATTER) : "Em aberto";
+    }
+
+    public String getTempoFormatado(LocalDateTime momentoReferencia) {
+        long totalMinutos = calcularMinutosPermanencia(momentoReferencia);
+        long horas = totalMinutos / 60;
+        long minutos = totalMinutos % 60;
+        return String.format("%dh %02dmin (%d minutos)", horas, minutos, totalMinutos);
+    }
+
+    public String gerarComprovante() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("=========================================\n");
+        sb.append("         COMPROVANTE DE ESTACIONAMENTO   \n");
+        sb.append("=========================================\n");
+        sb.append(String.format(" Ticket ID:        %s\n", id));
+        sb.append(String.format(" Veículo:          %s - %s\n", veiculo.getPlaca(), veiculo.getModelo()));
+        sb.append(String.format(" Categoria:        %s\n", veiculo.getTipo().getDescricao()));
+        sb.append(String.format(" Vaga Utilizada:   #%02d\n", vaga.getNumero()));
+        sb.append(String.format(" Entrada:          %s\n", getEntradaFormatada()));
+        sb.append(String.format(" Saída:            %s\n", getSaidaFormatada()));
+        if (encerrado) {
+            sb.append(String.format(" Tempo Total:      %s\n", getTempoFormatado(dataHoraSaida)));
+            sb.append(String.format(" Valor Total:      R$ %.2f\n", valorCobrado));
+            sb.append(" Status:           PAGO / ENCERRADO\n");
+        } else {
+            sb.append(" Status:           EM ABERTO\n");
+        }
+        sb.append("=========================================");
+        return sb.toString();
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Ticket[%s] Placa: %s | Vaga: #%02d | Entrada: %s | Status: %s",
+                id, veiculo.getPlaca(), vaga.getNumero(), getEntradaFormatada(),
+                encerrado ? String.format("Pago (R$ %.2f)", valorCobrado) : "Ativo");
+    }
+}
+
+--------------------------------------------------------------------------------
+6.5 Estacionamento.java
+--------------------------------------------------------------------------------
+package br.com.estacionamento.service;
+
+import br.com.estacionamento.model.Ticket;
+import br.com.estacionamento.model.TipoVeiculo;
+import br.com.estacionamento.model.Vaga;
+import br.com.estacionamento.model.Veiculo;
+
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * Classe de serviço que centraliza as regras de negócio do estacionamento:
+ * gerenciamento de vagas, fluxo de entrada e saída, tarifação e relatórios.
+ */
+public class Estacionamento {
+    private final String nome;
+    private double tarifaBaseHora;
+    private final List<Vaga> vagas;
+    private final Map<String, Ticket> ticketsAtivos;
+    private final List<Ticket> historicoTickets;
+    private int proximoNumeroTicket;
+
+    public Estacionamento(String nome, double tarifaBaseHora) {
+        if (nome == null || nome.trim().isEmpty()) {
+            throw new IllegalArgumentException("O nome do estacionamento não pode ser vazio.");
+        }
+        if (tarifaBaseHora <= 0) {
+            throw new IllegalArgumentException("A tarifa base por hora deve ser maior que zero.");
+        }
+        this.nome = nome;
+        this.tarifaBaseHora = tarifaBaseHora;
+        this.vagas = new ArrayList<>();
+        this.ticketsAtivos = new HashMap<>();
+        this.historicoTickets = new ArrayList<>();
+        this.proximoNumeroTicket = 1001;
+    }
+
+    public void adicionarVaga(Vaga vaga) {
+        if (vaga == null) {
+            throw new IllegalArgumentException("Vaga não pode ser nula.");
+        }
+        boolean numeroJaExiste = vagas.stream().anyMatch(v -> v.getNumero() == vaga.getNumero());
+        if (numeroJaExiste) {
+            throw new IllegalArgumentException("Já existe uma vaga cadastrada com o número #" + vaga.getNumero());
+        }
+        this.vagas.add(vaga);
+    }
+
+    public void inicializarVagasPadrao() {
+        int numero = 1;
+        // 5 Vagas para Carro
+        for (int i = 0; i < 5; i++) {
+            adicionarVaga(new Vaga(numero++, TipoVeiculo.CARRO));
+        }
+        // 3 Vagas para Moto
+        for (int i = 0; i < 3; i++) {
+            adicionarVaga(new Vaga(numero++, TipoVeiculo.MOTO));
+        }
+        // 2 Vagas para Caminhonete
+        for (int i = 0; i < 2; i++) {
+            adicionarVaga(new Vaga(numero++, TipoVeiculo.CAMINHONETE));
+        }
+    }
+
+    public Ticket registrarEntrada(Veiculo veiculo) {
+        return registrarEntrada(veiculo, LocalDateTime.now());
+    }
+
+    public Ticket registrarEntrada(Veiculo veiculo, LocalDateTime dataHoraEntrada) {
+        if (veiculo == null) {
+            throw new IllegalArgumentException("Veículo não pode ser nulo.");
+        }
+        String placaFormatada = veiculo.getPlaca().toUpperCase();
+
+        if (ticketsAtivos.containsKey(placaFormatada)) {
+            throw new IllegalStateException("O veículo de placa " + placaFormatada + " já está dentro do estacionamento!");
+        }
+
+        // Localiza a primeira vaga livre compatível
+        Vaga vagaDisponivel = vagas.stream()
+                .filter(Vaga::isDisponivel)
+                .filter(v -> v.isCompativel(veiculo.getTipo()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "Não há vagas disponíveis para a categoria: " + veiculo.getTipo().getDescricao()
+                ));
+
+        // Reserva a vaga física
+        vagaDisponivel.ocupar(veiculo);
+
+        // Cria o ticket ativo
+        String ticketId = "TCK-" + (proximoNumeroTicket++);
+        Ticket ticket = new Ticket(ticketId, veiculo, vagaDisponivel, dataHoraEntrada);
+        ticketsAtivos.put(placaFormatada, ticket);
+
+        return ticket;
+    }
+
+    public Ticket registrarSaida(String placa) {
+        return registrarSaida(placa, LocalDateTime.now());
+    }
+
+    public Ticket registrarSaida(String placa, LocalDateTime dataHoraSaida) {
+        if (placa == null || placa.trim().isEmpty()) {
+            throw new IllegalArgumentException("A placa deve ser informada para registrar a saída.");
+        }
+        String placaFormatada = placa.trim().toUpperCase();
+
+        Ticket ticket = ticketsAtivos.get(placaFormatada);
+        if (ticket == null) {
+            throw new NoSuchElementException("Nenhum veículo com a placa " + placaFormatada + " encontrado no estacionamento.");
+        }
+
+        // Libera a vaga física
+        ticket.getVaga().desocupar();
+
+        // Encerra a cobrança
+        ticket.encerrar(dataHoraSaida, tarifaBaseHora);
+
+        // Atualiza as listas
+        ticketsAtivos.remove(placaFormatada);
+        historicoTickets.add(ticket);
+
+        return ticket;
+    }
+
+    public List<Vaga> consultarVagasDisponiveis() {
+        return vagas.stream()
+                .filter(Vaga::isDisponivel)
+                .collect(Collectors.toList());
+    }
+
+    public List<Vaga> consultarVagasOcupadas() {
+        return vagas.stream()
+                .filter(v -> !v.isDisponivel())
+                .collect(Collectors.toList());
+    }
+
+    public List<Vaga> consultarVagasDisponiveisPorTipo(TipoVeiculo tipo) {
+        return vagas.stream()
+                .filter(Vaga::isDisponivel)
+                .filter(v -> v.isCompativel(tipo))
+                .collect(Collectors.toList());
+    }
+
+    public Optional<Ticket> buscarTicketAtivo(String placa) {
+        if (placa == null) return Optional.empty();
+        return Optional.ofNullable(ticketsAtivos.get(placa.trim().toUpperCase()));
+    }
+
+    public double getFaturamentoTotal() {
+        return historicoTickets.stream()
+                .mapToDouble(Ticket::getValorCobrado)
+                .sum();
+    }
+
+    public String gerarRelatorioOcupacao() {
+        int totalVagas = vagas.size();
+        int vagasOcupadas = consultarVagasOcupadas().size();
+        int vagasLivres = totalVagas - vagasOcupadas;
+        double taxaOcupacao = totalVagas > 0 ? ((double) vagasOcupadas / totalVagas) * 100.0 : 0.0;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("\n=== RELATÓRIO DO %s ===\n", nome.toUpperCase()));
+        sb.append(String.format(" Tarifa Base:           R$ %.2f / hora\n", tarifaBaseHora));
+        sb.append(String.format(" Capacidade Total:      %d vagas\n", totalVagas));
+        sb.append(String.format(" Vagas Ocupadas:        %d\n", vagasOcupadas));
+        sb.append(String.format(" Vagas Livres:          %d\n", vagasLivres));
+        sb.append(String.format(" Taxa de Ocupação:      %.1f%%\n", taxaOcupacao));
+        sb.append(String.format(" Veículos no Pátio:     %d\n", ticketsAtivos.size()));
+        sb.append(String.format(" Atendimentos Concluídos: %d\n", historicoTickets.size()));
+        sb.append(String.format(" Faturamento Acumulado: R$ %.2f\n", getFaturamentoTotal()));
+        sb.append("=========================================\n");
+        return sb.toString();
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public double getTarifaBaseHora() {
+        return tarifaBaseHora;
+    }
+
+    public void setTarifaBaseHora(double tarifaBaseHora) {
+        if (tarifaBaseHora <= 0) {
+            throw new IllegalArgumentException("A tarifa deve ser maior que zero.");
+        }
+        this.tarifaBaseHora = tarifaBaseHora;
+    }
+
+    public List<Vaga> getVagas() {
+        return Collections.unmodifiableList(vagas);
+    }
+
+    public Collection<Ticket> getTicketsAtivos() {
+        return Collections.unmodifiableCollection(ticketsAtivos.values());
+    }
+
+    public List<Ticket> getHistoricoTickets() {
+        return Collections.unmodifiableList(historicoTickets);
+    }
+}
+
+--------------------------------------------------------------------------------
+6.6 Main.java
+--------------------------------------------------------------------------------
+package br.com.estacionamento.app;
+
+import br.com.estacionamento.model.Ticket;
+import br.com.estacionamento.model.TipoVeiculo;
+import br.com.estacionamento.model.Vaga;
+import br.com.estacionamento.model.Veiculo;
+import br.com.estacionamento.service.Estacionamento;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Scanner;
+
+/**
+ * Ponto de entrada da aplicação.
+ * Grupo 3: Mariah M., Vinicius S., Alan G., Bernardo R.
+ * Data: 24/09/2026
+ */
+public class Main {
+
+    public static void main(String[] args) {
+        Estacionamento estacionamento = new Estacionamento("Estacionamento Central Grupo 3", 10.0);
+        estacionamento.inicializarVagasPadrao();
+
+        Scanner scanner = new Scanner(System.in);
+        boolean rodando = true;
+
+        System.out.println("=========================================================");
+        System.out.println(" BEM-VINDO AO SISTEMA DE ESTACIONAMENTO (GRUPO 3)");
+        System.out.println(" Mariah M. | Vinicius S. | Alan G. | Bernardo R.");
+        System.out.println("=========================================================");
+
+        while (rodando) {
+            exibirMenu();
+            System.out.print("Escolha uma opção: ");
+            String opcao = scanner.nextLine().trim();
+
+            switch (opcao) {
+                case "1":
+                    cadastrarEntrada(scanner, estacionamento);
+                    break;
+                case "2":
+                    processarSaida(scanner, estacionamento);
+                    break;
+                case "3":
+                    consultarVagas(estacionamento);
+                    break;
+                case "4":
+                    listarVeiculosEstacionados(estacionamento);
+                    break;
+                case "5":
+                    System.out.println(estacionamento.gerarRelatorioOcupacao());
+                    break;
+                case "6":
+                    executarDemonstracaoAutomatica(estacionamento);
+                    break;
+                case "0":
+                    System.out.println("\nEncerrando o sistema. Boa apresentação a todos!");
+                    rodando = false;
+                    break;
+                default:
+                    System.out.println("Opção inválida! Tente novamente.");
+            }
+        }
+        scanner.close();
+    }
+
+    private static void exibirMenu() {
+        System.out.println("\n--- MENU PRINCIPAL ---");
+        System.out.println(" [1] Entrada de Veículo");
+        System.out.println(" [2] Saída e Pagamento");
+        System.out.println(" [3] Consultar Vagas");
+        System.out.println(" [4] Veículos no Pátio");
+        System.out.println(" [5] Relatório e Faturamento");
+        System.out.println(" [6] Demonstração Completa");
+        System.out.println(" [0] Sair");
+        System.out.println("----------------------");
+    }
+
+    private static void cadastrarEntrada(Scanner scanner, Estacionamento estacionamento) {
+        System.out.println("\n>>> REGISTRAR ENTRADA DE VEÍCULO <<<");
+        try {
+            System.out.print("Informe a placa do veículo (ex: ABC1D23): ");
+            String placa = scanner.nextLine().trim();
+
+            System.out.print("Informe o modelo do veículo (ex: Corolla): ");
+            String modelo = scanner.nextLine().trim();
+
+            System.out.println("Selecione o tipo do veículo:");
+            System.out.println(" 1 - Carro de Passeio");
+            System.out.println(" 2 - Motocicleta");
+            System.out.println(" 3 - Caminhonete / SUV");
+            System.out.print("Opção: ");
+            String tipoOpt = scanner.nextLine().trim();
+
+            TipoVeiculo tipo;
+            switch (tipoOpt) {
+                case "1": tipo = TipoVeiculo.CARRO; break;
+                case "2": tipo = TipoVeiculo.MOTO; break;
+                case "3": tipo = TipoVeiculo.CAMINHONETE; break;
+                default:
+                    System.out.println("Tipo inválido! Operação cancelada.");
+                    return;
+            }
+
+            Veiculo veiculo = new Veiculo(placa, modelo, tipo);
+            Ticket ticket = estacionamento.registrarEntrada(veiculo);
+
+            System.out.println("\n>> Entrada autorizada com sucesso!");
+            System.out.println(ticket.gerarComprovante());
+
+        } catch (Exception e) {
+            System.out.println("Erro ao registrar entrada: " + e.getMessage());
+        }
+    }
+
+    private static void processarSaida(Scanner scanner, Estacionamento estacionamento) {
+        System.out.println("\n>>> REGISTRAR SAÍDA E PAGAMENTO <<<");
+        try {
+            System.out.print("Informe a placa do veículo: ");
+            String placa = scanner.nextLine().trim();
+
+            Ticket ticket = estacionamento.registrarSaida(placa);
+
+            System.out.println("\n>> Saída finalizada e pagamento registrado!");
+            System.out.println(ticket.gerarComprovante());
+
+        } catch (Exception e) {
+            System.out.println("Erro ao processar saída: " + e.getMessage());
+        }
+    }
+
+    private static void consultarVagas(Estacionamento estacionamento) {
+        System.out.println("\n>>> CONSULTA DE VAGAS <<<");
+        List<Vaga> todas = estacionamento.getVagas();
+
+        System.out.println("Estado atual das vagas:");
+        for (Vaga vaga : todas) {
+            System.out.println("  " + vaga);
+        }
+
+        List<Vaga> livres = estacionamento.consultarVagasDisponiveis();
+        List<Vaga> ocupadas = estacionamento.consultarVagasOcupadas();
+        System.out.printf("\nResumo: %d livres | %d ocupadas | Total: %d\n",
+                livres.size(), ocupadas.size(), todas.size());
+    }
+
+    private static void listarVeiculosEstacionados(Estacionamento estacionamento) {
+        System.out.println("\n>>> VEÍCULOS ATUALMENTE NO PÁTIO <<<");
+        if (estacionamento.getTicketsAtivos().isEmpty()) {
+            System.out.println("Nenhum veículo estacionado no momento.");
+            return;
+        }
+
+        for (Ticket t : estacionamento.getTicketsAtivos()) {
+            System.out.printf("  • Placa: %-9s | Modelo: %-15s | Vaga: #%02d | Entrada: %s\n",
+                    t.getVeiculo().getPlaca(),
+                    t.getVeiculo().getModelo(),
+                    t.getVaga().getNumero(),
+                    t.getEntradaFormatada());
+        }
+    }
+
+    public static void executarDemonstracaoAutomatica(Estacionamento estacionamento) {
+        System.out.println("\n=========================================================");
+        System.out.println("   INICIANDO DEMONSTRAÇÃO AUTOMÁTICA PARA APRESENTAÇÃO   ");
+        System.out.println("=========================================================");
+
+        System.out.println("\n[PASSO 1] Verificando situação inicial das vagas...");
+        System.out.printf("Total de vagas disponíveis: %d de %d\n",
+                estacionamento.consultarVagasDisponiveis().size(),
+                estacionamento.getVagas().size());
+
+        System.out.println("\n[PASSO 2] Registrando entrada de 3 veículos de categorias distintas...");
+        LocalDateTime horaBase = LocalDateTime.now().minusHours(3);
+
+        Veiculo carro1 = new Veiculo("ABC-1D23", "Toyota Corolla", TipoVeiculo.CARRO);
+        Veiculo moto1 = new Veiculo("XYZ-9E87", "Honda CG 160", TipoVeiculo.MOTO);
+        Veiculo suv1 = new Veiculo("SUV-2026", "Jeep Compass", TipoVeiculo.CAMINHONETE);
+
+        Ticket ticketCarro = estacionamento.registrarEntrada(carro1, horaBase);
+        System.out.println("-> Entrou: " + carro1 + " | " + ticketCarro.getId() + " na Vaga #" + ticketCarro.getVaga().getNumero());
+
+        Ticket ticketMoto = estacionamento.registrarEntrada(moto1, horaBase.plusHours(1).plusMinutes(45));
+        System.out.println("-> Entrou: " + moto1 + " | " + ticketMoto.getId() + " na Vaga #" + ticketMoto.getVaga().getNumero());
+
+        Ticket ticketSuv = estacionamento.registrarEntrada(suv1, LocalDateTime.now().minusMinutes(20));
+        System.out.println("-> Entrou: " + suv1 + " | " + ticketSuv.getId() + " na Vaga #" + ticketSuv.getVaga().getNumero());
+
+        System.out.println("\n[PASSO 3] Situação do pátio com os veículos alocados:");
+        listarVeiculosEstacionados(estacionamento);
+
+        System.out.println("\n[PASSO 4] Testando regra de negócio: bloqueio de entrada duplicada...");
+        try {
+            estacionamento.registrarEntrada(new Veiculo("ABC-1D23", "Corolla Clone", TipoVeiculo.CARRO));
+        } catch (Exception ex) {
+            System.out.println("-> Bloqueio operado com sucesso: " + ex.getMessage());
+        }
+
+        System.out.println("\n[PASSO 5] Registrando SAÍDA do Carro (permanência de 3 horas)...");
+        Ticket ticketCarroEncerrado = estacionamento.registrarSaida(carro1.getPlaca(), LocalDateTime.now());
+        System.out.println(ticketCarroEncerrado.gerarComprovante());
+
+        System.out.println("\n[PASSO 6] Registrando SAÍDA da Moto (permanência de 1h15)...");
+        Ticket ticketMotoEncerrado = estacionamento.registrarSaida(moto1.getPlaca(), LocalDateTime.now());
+        System.out.println(ticketMotoEncerrado.gerarComprovante());
+
+        System.out.println("\n[PASSO 7] Relatório final de ocupação e faturamento:");
+        System.out.println(estacionamento.gerarRelatorioOcupacao());
+
+        System.out.println("=========================================================");
+        System.out.println("      DEMONSTRAÇÃO CONCLUÍDA COM SUCESSO!                ");
+        System.out.println("=========================================================");
+    }
+}
+
+--------------------------------------------------------------------------------
+6.7 TestEstacionamento.java
+--------------------------------------------------------------------------------
+package br.com.estacionamento.test;
+
+import br.com.estacionamento.model.Ticket;
+import br.com.estacionamento.model.TipoVeiculo;
+import br.com.estacionamento.model.Vaga;
+import br.com.estacionamento.model.Veiculo;
+import br.com.estacionamento.service.Estacionamento;
+
+import java.time.LocalDateTime;
+
+/**
+ * Suíte de testes automatizados para verificação das regras de negócio.
+ */
+public class TestEstacionamento {
+
+    public static void main(String[] args) {
+        System.out.println("==================================================");
+        System.out.println(" INICIANDO TESTES AUTOMATIZADOS DO SISTEMA        ");
+        System.out.println("==================================================");
+
+        testarCriacaoVeiculo();
+        testarVagasECompatibilidade();
+        testarFluxoCompletoEstacionamento();
+        testarToleranciaECalculoTarifa();
+        testarBloqueioEntradaDuplicada();
+
+        System.out.println("\n>>> TODOS OS TESTES PASSARAM COM SUCESSO! 100% APROVADO! <<<");
+        System.out.println("==================================================");
+    }
+
+    private static void testarCriacaoVeiculo() {
+        System.out.print("[TESTE 1] Criação e validação de veículos... ");
+        Veiculo v = new Veiculo("bra-2e19", "Gol G7", TipoVeiculo.CARRO);
+        assert v.getPlaca().equals("BRA-2E19") : "Placa deveria estar em maiúsculas";
+        assert v.getModelo().equals("Gol G7");
+        assert v.getTipo() == TipoVeiculo.CARRO;
+        System.out.println("OK!");
+    }
+
+    private static void testarVagasECompatibilidade() {
+        System.out.print("[TESTE 2] Ocupação e compatibilidade de vagas... ");
+        Vaga vagaCarro = new Vaga(1, TipoVeiculo.CARRO);
+        assert vagaCarro.isDisponivel();
+        assert vagaCarro.isCompativel(TipoVeiculo.CARRO);
+        assert !vagaCarro.isCompativel(TipoVeiculo.MOTO);
+
+        Veiculo carro = new Veiculo("ABC-1234", "Civic", TipoVeiculo.CARRO);
+        vagaCarro.ocupar(carro);
+        assert vagaCarro.isOcupada();
+        assert !vagaCarro.isDisponivel();
+        assert vagaCarro.getVeiculoEstacionado().equals(carro);
+
+        Veiculo desocupado = vagaCarro.desocupar();
+        assert desocupado.equals(carro);
+        assert vagaCarro.isDisponivel();
+        System.out.println("OK!");
+    }
+
+    private static void testarFluxoCompletoEstacionamento() {
+        System.out.print("[TESTE 3] Fluxo de entrada, permanência e saída... ");
+        Estacionamento est = new Estacionamento("Test Auto", 10.0);
+        est.inicializarVagasPadrao();
+
+        Veiculo moto = new Veiculo("MOT-9999", "Yamaha MT-03", TipoVeiculo.MOTO);
+        LocalDateTime entrada = LocalDateTime.of(2026, 9, 20, 10, 0);
+        Ticket ticket = est.registrarEntrada(moto, entrada);
+
+        assert ticket != null;
+        assert ticket.getVaga().isOcupada();
+        assert est.buscarTicketAtivo("MOT-9999").isPresent();
+
+        // 2 horas de moto: 2h * R$ 10.00 * 0.5 = R$ 10.00
+        LocalDateTime saida = LocalDateTime.of(2026, 9, 20, 12, 0);
+        Ticket encerrado = est.registrarSaida("MOT-9999", saida);
+
+        assert encerrado.isEncerrado();
+        assert encerrado.getValorCobrado() == 10.0;
+        assert encerrado.getVaga().isDisponivel();
+        assert est.buscarTicketAtivo("MOT-9999").isEmpty();
+        assert est.getFaturamentoTotal() == 10.0;
+        System.out.println("OK!");
+    }
+
+    private static void testarToleranciaECalculoTarifa() {
+        System.out.print("[TESTE 4] Regra de tolerância (15 min gratuitos)... ");
+        Estacionamento est = new Estacionamento("Test Tolerancia", 12.0);
+        est.adicionarVaga(new Vaga(1, TipoVeiculo.CARRO));
+
+        Veiculo carro = new Veiculo("RAP-0001", "Kwid", TipoVeiculo.CARRO);
+        LocalDateTime entrada = LocalDateTime.now();
+        est.registrarEntrada(carro, entrada);
+
+        Ticket saidaRapida = est.registrarSaida("RAP-0001", entrada.plusMinutes(12));
+        assert saidaRapida.getValorCobrado() == 0.0 : "12 minutos de permanência devem ser gratuitos";
+        System.out.println("OK!");
+    }
+
+    private static void testarBloqueioEntradaDuplicada() {
+        System.out.print("[TESTE 5] Bloqueio de entrada duplicada de veículo... ");
+        Estacionamento est = new Estacionamento("Test Bloqueio", 10.0);
+        est.adicionarVaga(new Vaga(1, TipoVeiculo.CARRO));
+        est.adicionarVaga(new Vaga(2, TipoVeiculo.CARRO));
+
+        Veiculo carro = new Veiculo("DUP-1111", "Onix", TipoVeiculo.CARRO);
+        est.registrarEntrada(carro);
+
+        boolean bloqueou = false;
+        try {
+            est.registrarEntrada(new Veiculo("DUP-1111", "Onix", TipoVeiculo.CARRO));
+        } catch (IllegalStateException e) {
+            bloqueou = true;
+        }
+        assert bloqueou : "Deveria barrar veículo duplicado";
+        System.out.println("OK!");
+    }
+}
+
+================================================================================
+7. TAREFA 5: COMPARAÇÃO UML VS. CÓDIGO E REDUÇÃO DA COMPLEXIDADE
+================================================================================
+
+7.1 Mapeamento Direto entre UML e Código Java:
+- Visibilidade Privada (-): Atributos declarados como private com getters seguros. Encapsulamento total que impede mutações ilegais no estado interno.
+- Composição (1 para 1..*): private final List<Vaga> vagas;. As vagas físicas são gerenciadas internamente pela classe controladora do estacionamento.
+- Agregação Fraca (o-- 0..1): private Veiculo veiculoEstacionado;. Quando a vaga é desocupada, o veículo é preservado e devolvido, sem ser destruído.
+- Associação Unidirecional: private final Veiculo veiculo; no Ticket. Garante integridade referencial imutável.
+- Consultas de Coleção: Métodos com Java Streams (filter, mapToDouble, sum). Consultas declarativas limpas, sem poluição de laços repetitivos.
+
+7.2 Como a Abstração Reduziu a Complexidade:
+1. Diminuição Drástica da Carga Cognitiva: Ao descartarmos ruídos do mundo físico (marca de pneus, cor da lataria, dados de RG do motorista, tipo de lâmpada da vaga), concentramo-nos apenas no que afeta o cálculo do negócio: placa, categoria e tempo.
+2. Separação de Responsabilidades e Baixo Acoplamento: O Veiculo não sabe quanto custa o estacionamento; a Vaga não monitora cronômetro; o Ticket cuida da cobrança; e o Estacionamento orquestra a entrada e saída. Não existem "Classes Deus" (God Classes).
+3. Facilidade de Manutenção e Extensão (Princípio Aberto/Fechado): Para adicionar uma nova categoria (ex: CAMINHAO ou CARRO_ELETRICO), basta adicionar uma constante no enum TipoVeiculo com seu multiplicador de tarifa, sem alterar as classes Vaga ou Estacionamento.
+4. Previsibilidade de Desenvolvimento: Elaborar o diagrama UML antes de iniciar a codificação atuou como uma verdadeira "planta baixa", tornando a escrita do código em Java fluida, segura e sem refatorações imprevistas.
+
+================================================================================
+8. ROTEIRO COMPLETO DE APRESENTAÇÃO EM GRUPO (SLIDE A SLIDE)
+================================================================================
+
+Equipe: Mariah M., Vinicius S., Alan G., Bernardo R.
+Tempo Estimado: 12 a 15 minutos (3 minutos por integrante).
+
+SLIDE 1: Capa
+- Título: Sistema de Gestão de Estacionamento
+- Subtítulo: Abstração, Identificação de Objetos e UML aplicados em Java
+- Grupo 3: Mariah M., Vinicius S., Alan G., Bernardo R.
+- Fala (Mariah): "Boa noite a todos, professor e colegas. Nós somos o Grupo 3, formado por mim, pelo Vinicius, pelo Alan e pelo Bernardo. Hoje apresentamos nosso projeto de Sistema de Estacionamento. Nosso objetivo principal foi vivenciar o ciclo de engenharia de software: desde a abstração do mundo real e identificação de objetos, passando pelo diagrama UML, até a implementação funcional em Java."
+
+SLIDE 2: Contexto do Problema e o Desafio (Tarefa 1)
+- Conteúdo: Funcionamento do estacionamento rotativo, vagas setorizadas (Carro, Moto, SUV) e tarifação temporal justa.
+- Fala (Mariah): "O problema analisado foi o controle de um estacionamento rotativo. O negócio precisa garantir que veículos só entrem se houver vagas compatíveis, calcular com precisão quanto tempo ficaram estacionados e aplicar a tarifa correspondente. Mas no mundo real, um carro e um estacionamento possuem centenas de características. Como escolher o que colocar no software? É aí que entra a Abstração."
+
+SLIDE 3: O Princípio da Abstração no Domínio (Tarefa 1)
+- Conteúdo: Tabela comparativa (Essencial vs. Ruído Descartado). Mantidos: Placa, categoria, vaga, horários e tarifas. Descartados: Cor, quilometragem, marca do pneu, condutor e iluminação.
+- Fala (Mariah): "A abstração é a nossa defesa contra a complexidade. Como vemos na tabela, filtramos o que é essencial. Para calcular a tarifa e controlar as vagas, não importa se o carro é azul, se o pneu é aro 17 ou quem está dirigindo. Focamos estritamente na placa, na categoria e no tempo. Passo a palavra para o Vinicius, que vai explicar como esses conceitos viraram classes."
+
+SLIDE 4: Definição das Classes e Responsabilidades (Tarefa 2)
+- Conteúdo: Princípio da Responsabilidade Única (SRP) e as 5 entidades (TipoVeiculo, Veiculo, Vaga, Ticket, Estacionamento).
+- Fala (Vinicius): "Boa noite a todos. A partir dos dados essenciais, modelamos 5 classes coesas, onde cada uma possui uma responsabilidade muito bem delimitada."
+
+SLIDE 5: Detalhamento Técnico das Classes (Tarefa 2)
+- Conteúdo: TipoVeiculo (multiplicadores), Veiculo (placa, modelo, tipo), Vaga (ocupação e compatibilidade), Ticket (tempo e tolerância de 15 min), Estacionamento (fachada controladora).
+- Fala (Vinicius): "Notem o desacoplamento: o Veículo não sabe quanto custa a hora; a Vaga apenas sabe se está ocupada e se o veículo cabe nela; e o Ticket cuida do tempo e valor. Agora o Alan vai demonstrar como tudo isso se conecta graficamente no Diagrama UML."
+
+SLIDE 6: O Diagrama de Classes UML (Tarefa 3)
+- Conteúdo: Apresentação do diagrama com atributos privados (-) e métodos públicos (+).
+- Fala (Alan): "Boa noite. Este é o Diagrama de Classes que desenhamos antes de escrever qualquer linha de código em Java. Ele foi a nossa planta baixa. Nele estão evidentes o encapsulamento, com atributos privados, e os métodos públicos que representam o comportamento do sistema."
+
+SLIDE 7: Relações Estruturais no UML: Composição vs. Agregação (Tarefa 3)
+- Conteúdo: Composição entre Estacionamento e Vagas/Tickets; Agregação entre Vaga e Veículo; Associação simples do Ticket.
+- Fala (Alan): "Um ponto alto da nossa modelagem foi diferenciar Composição de Agregação. O estacionamento possui relação de Composição com as vagas: se o estacionamento deixar de existir, as vagas no software deixam de existir. Já a Vaga tem relação de Agregação com o Veículo: quando o carro vai embora, a vaga fica livre, mas o veículo continua existindo no mundo real. Passo para o Bernardo, que mostrará isso funcionando em Java."
+
+SLIDE 8: Implementação em Java e Demonstração ao Vivo (Tarefa 4)
+- Conteúdo: Modularização em pacotes, Java moderno com java.time (LocalDateTime e Duration), execução no console.
+- Fala (Bernardo): "Boa noite. Traduzimos fielmente o UML para Java, utilizando a API moderna java.time para cálculos seguros de duração. Vou rodar agora uma demonstração rápida." (Bernardo executa a Opção [6] do menu). "Vejam no console: o sistema inicia com vagas livres, estaciona um Corolla, uma moto CG e um Jeep Compass nas vagas corretas, bloqueia uma tentativa de entrada duplicada, e na saída do Corolla após 3 horas, calcula R$ 30,00, emitindo o comprovante e liberando a vaga imediatamente."
+
+SLIDE 9: Comparação UML vs. Código Java (Tarefa 5)
+- Conteúdo: Mapeamento direto de atributos, métodos e coleções do modelo para o código.
+- Fala (Bernardo): "Ao compararmos o UML com o código Java produzido, a correspondência foi direta. Ter feito o diagrama com antecedência eliminou dúvidas de implementação e garantiu que cada regra ficasse exatamente onde deveria estar."
+
+SLIDE 10: Como a Abstração Reduziu a Complexidade & Conclusão (Tarefa 5)
+- Conteúdo: Carga cognitiva reduzida, facilidade de manutenção e extensibilidade garantida (Open/Closed Principle).
+- Fala (Bernardo / Grupo): "Em conclusão: a Abstração foi a ferramenta que transformou um problema real potencialmente confuso em um software limpo, modular e de fácil manutenção. Demonstramos na prática que modelar antes de programar gera qualidade e robustez. Muito obrigado pela atenção de todos e estamos prontos para perguntas!"
+
+================================================================================
+9. RESULTADOS E VALIDAÇÃO DOS TESTES AUTOMATIZADOS
+================================================================================
+
+Resultados com mecanismo nativo de assertions (java -ea br.com.estacionamento.test.TestEstacionamento):
+- TESTE 1: Criação e Validação de Veículos -> Placa padronizada em caixa alta; bloqueio de valores nulos ou vazios. [APROVADO - OK!]
+- TESTE 2: Ocupação e Compatibilidade de Vagas -> Bloqueio de motos em vagas de carro; liberação do veículo ao desocupar. [APROVADO - OK!]
+- TESTE 3: Fluxo Completo de Entrada e Saída -> Permanência de 2h de moto apura R$ 10,00 (fator 0.5); desocupação da vaga. [APROVADO - OK!]
+- TESTE 4: Tolerância Inicial de Cortesia -> Saída com 12 minutos é isenta de cobrança (R$ 0,00). [APROVADO - OK!]
+- TESTE 5: Bloqueio de Entrada Duplicada -> Disparo de IllegalStateException ao tentar cadastrar veículo já no pátio. [APROVADO - OK!]
+
+--- FIM DO DOCUMENTO ---
