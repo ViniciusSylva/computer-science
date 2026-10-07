@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Order State Machine
+enum OrderStatus {
+  RECEIVED
+  PREPARING
+  READY
+  DELIVERED
+  CANCELED
+}
+
+// Menu Categories (e.g., Burgers, Drinks, Desserts)
+model Category {
+  id        String     @id @default(uuid())
+  name      String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  items     MenuItem[]
+}
+
+// Menu Items (e.g., Classic Cheeseburger, Coca-Cola)
+model MenuItem {
+  id           String        @id @default(uuid())
+  name         String
+  description  String?
+  price        Decimal       @db.Decimal(10, 2)
+  imageUrl     String?
+  isAvailable  Boolean       @default(true)
+  categoryId   String
+  category     Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  optionGroups OptionGroup[]
+  orderItems   OrderItem[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+// Option Groups for customization (e.g., "Extra Toppings", "Meat Doneness")
+model OptionGroup {
+  id         String   @id @default(uuid())
+  name       String
+  isRequired Boolean  @default(false)
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  options    Option[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// Individual options within a group (e.g., "Bacon +$1.50", "Medium Rare +$0.00")
+model Option {
+  id               String            @id @default(uuid())
+  name             String
+  price            Decimal           @default(0.00) @db.Decimal(10, 2)
+  optionGroupId    String
+  optionGroup      OptionGroup       @relation(fields: [optionGroupId], references: [id], onDelete: Cascade)
+  orderItemOptions OrderItemOption[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+// Primary Order entity
+model Order {
+  id          String      @id @default(uuid())
+  tableNumber Int
+  status      OrderStatus @default(RECEIVED)
+  totalAmount Decimal     @db.Decimal(10, 2)
+  notes       String?
+  items       OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+// Items inside an order (Snapshot of product details at purchase time)
+model OrderItem {
+  id         String            @id @default(uuid())
+  orderId    String
+  order      Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId String
+  menuItem   MenuItem          @relation(fields: [menuItemId], references: [id])
+  quantity   Int
+  unitPrice  Decimal           @db.Decimal(10, 2)
+  options    OrderItemOption[]
+}
+
+// Custom options selected for a specific order item
+model OrderItemOption {
+  id          String    @id @default(uuid())
+  orderItemId String
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  optionId    String
+  option      Option    @relation(fields: [optionId], references: [id])
+  price       Decimal   @db.Decimal(10, 2)
+}
