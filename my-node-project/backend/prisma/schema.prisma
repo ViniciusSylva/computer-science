@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  RECEIVED
+  PREPARING
+  READY
+  DELIVERED
+  CANCELED
+}
+
+enum OrderType {
+  DINE_IN
+  DELIVERY
+  TAKEAWAY
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+}
+
+model Table {
+  id        Int         @id @default(autoincrement())
+  number    Int         @unique
+  capacity  Int         @default(4)
+  status    TableStatus @default(AVAILABLE)
+  orders    Order[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model Category {
+  id          Int        @id @default(autoincrement())
+  name        String
+  description String?
+  icon        String?
+  orderIndex  Int        @default(0)
+  items       MenuItem[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model MenuItem {
+  id           Int           @id @default(autoincrement())
+  categoryId   Int
+  category     Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name         String
+  description  String?
+  price        Float
+  imageUrl     String?
+  isAvailable  Boolean       @default(true)
+  optionGroups OptionGroup[]
+  orderItems   OrderItem[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model OptionGroup {
+  id          Int          @id @default(autoincrement())
+  menuItemId  Int
+  menuItem    MenuItem     @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  title       String
+  minSelect   Int          @default(0)
+  maxSelect   Int          @default(1)
+  isRequired  Boolean      @default(false)
+  options     OptionItem[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model OptionItem {
+  id               Int               @id @default(autoincrement())
+  optionGroupId    Int
+  optionGroup      OptionGroup       @relation(fields: [optionGroupId], references: [id], onDelete: Cascade)
+  name             String
+  additionalPrice  Float             @default(0.0)
+  orderItemOptions OrderItemOption[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model Order {
+  id              Int         @id @default(autoincrement())
+  code            String      @unique
+  type            OrderType   @default(DINE_IN)
+  status          OrderStatus @default(RECEIVED)
+  tableId         Int?
+  table           Table?      @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  customerName    String?
+  customerPhone   String?
+  deliveryAddress String?
+  totalAmount     Float       @default(0.0)
+  notes           String?
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model OrderItem {
+  id              Int               @id @default(autoincrement())
+  orderId         Int
+  order           Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId      Int
+  menuItem        MenuItem          @relation(fields: [menuItemId], references: [id])
+  quantity        Int               @default(1)
+  unitPrice       Float
+  subtotal        Float
+  notes           String?
+  selectedOptions OrderItemOption[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model OrderItemOption {
+  id           Int        @id @default(autoincrement())
+  orderItemId  Int
+  orderItem    OrderItem  @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  optionItemId Int
+  optionItem   OptionItem @relation(fields: [optionItemId], references: [id])
+  name         String
+  price        Float
+}
+
