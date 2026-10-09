@@ -1,0 +1,43 @@
+# ==============================================================================
+# RESTAURANT SAAS - DEPENDENCIES & REQUIREMENTS SPECIFICATION
+# ==============================================================================
+# Quick Install: Execute the command below from the project root:
+#   npm run install:all
+#
+# Or install separately:
+#   cd backend && npm install
+#   cd ../frontend && npm install
+# ==============================================================================
+
+# Core System Prerequisites:
+# Node.js: >=22.0.0 <=24.19.0 (LTS)
+# npm: >=10.0.0
+# Docker & Docker Compose (PostgreSQL 16)
+
+# Backend Runtime Dependencies:
+express==4.21.1
+@prisma/client==5.22.0
+cors==2.8.5
+dotenv==16.4.5
+
+# Backend Development Tooling:
+typescript==5.6.3
+nodemon==3.1.7
+tsx==4.19.2
+prisma==5.22.0
+@types/node==22.9.0
+@types/express==4.17.21
+@types/cors==2.8.17
+
+# Frontend Runtime Dependencies:
+react==18.3.1
+react-dom==18.3.1
+
+# Frontend Development Tooling:
+vite==5.4.11
+@vitejs/plugin-react==4.3.3
+tailwindcss==3.4.15
+postcss==8.4.49
+autoprefixer==10.4.20
+@types/react==18.3.12
+@types/react-dom==18.3.1
