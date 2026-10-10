@@ -11,12 +11,18 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:seed": "tsx prisma/seed.ts",
-    "test": "tsx --test src/services/order-state-machine.test.ts"
+    "test": "tsx --test \"src/**/*.test.ts\""
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
-  "keywords": ["express", "prisma", "postgresql", "restaurant", "kds"],
+  "keywords": [
+    "express",
+    "prisma",
+    "postgresql",
+    "restaurant",
+    "kds"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -29,10 +35,11 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^22.9.0",
+    "@types/supertest": "^7.2.1",
     "nodemon": "^3.1.7",
     "prisma": "^5.22.0",
+    "supertest": "^7.3.1",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3"
   }
 }
-
