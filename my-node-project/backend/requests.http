@@ -1,0 +1,169 @@
+### ==============================================================================
+### RESTAURANT SAAS - API REQUESTS COLLECTION (REST CLIENT / VS CODE)
+### ==============================================================================
+@baseUrl = http://localhost:3001/api
+
+### 1. Healthcheck
+GET {{baseUrl}}/health
+Accept: application/json
+
+### ==============================================================================
+### 2. CATEGORIAS (CARDÁPIO)
+### ==============================================================================
+
+### Listar todas as categorias com itens e opcionais
+GET {{baseUrl}}/categories
+Accept: application/json
+
+### Criar nova categoria
+POST {{baseUrl}}/categories
+Content-Type: application/json
+
+{
+  "name": "Pizzas Artesanais",
+  "description": "Massas de fermentação lenta",
+  "icon": "🍕",
+  "orderIndex": 5
+}
+
+### Atualizar categoria
+PUT {{baseUrl}}/categories/1
+Content-Type: application/json
+
+{
+  "name": "Entradas Especiais & Petiscos",
+  "description": "Perfeitas para abrir o apetite",
+  "orderIndex": 1
+}
+
+### ==============================================================================
+### 3. ITENS DO CARDÁPIO (MENU ITEMS)
+### ==============================================================================
+
+### Listar itens do cardápio
+GET {{baseUrl}}/menu-items
+Accept: application/json
+
+### Buscar item por ID (com grupos de opções)
+GET {{baseUrl}}/menu-items/1
+Accept: application/json
+
+### Criar novo item com grupos de opções (Ex: Smash Burger)
+POST {{baseUrl}}/menu-items
+Content-Type: application/json
+
+{
+  "categoryId": 2,
+  "name": "Smash Burger Duplo",
+  "description": "2x carnes smash de 90g com crostinha crocante, queijo cheddar e molho especial.",
+  "price": 29.90,
+  "imageUrl": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80",
+  "isAvailable": true,
+  "optionGroups": [
+    {
+      "title": "Ponto da Carne",
+      "isRequired": true,
+      "minSelect": 1,
+      "maxSelect": 1,
+      "options": [
+        { "name": "Ao Ponto", "additionalPrice": 0 },
+        { "name": "Bem Passado", "additionalPrice": 0 }
+      ]
+    },
+    {
+      "title": "Adicionais Extras",
+      "isRequired": false,
+      "minSelect": 0,
+      "maxSelect": 2,
+      "options": [
+        { "name": "Bacon Crocante", "additionalPrice": 5.00 },
+        { "name": "Queijo Extra", "additionalPrice": 4.00 }
+      ]
+    }
+  ]
+}
+
+### ==============================================================================
+### 4. MESAS (SALÃO)
+### ==============================================================================
+
+### Listar mesas com status e pedidos em andamento
+GET {{baseUrl}}/tables
+Accept: application/json
+
+### Buscar mesa por ID
+GET {{baseUrl}}/tables/1
+Accept: application/json
+
+### Cadastrar nova mesa
+POST {{baseUrl}}/tables
+Content-Type: application/json
+
+{
+  "number": 7,
+  "capacity": 4
+}
+
+### Atualizar status da mesa manualmente
+PATCH {{baseUrl}}/tables/1/status
+Content-Type: application/json
+
+{
+  "status": "AVAILABLE"
+}
+
+### ==============================================================================
+### 5. PEDIDOS & MÁQUINA DE ESTADOS (KDS / COZINHA)
+### ==============================================================================
+
+### Listar todos os pedidos da fila (KDS)
+GET {{baseUrl}}/orders
+Accept: application/json
+
+### Filtrar pedidos apenas no status RECEBIDO
+GET {{baseUrl}}/orders?status=RECEIVED
+Accept: application/json
+
+### Filtrar pedidos apenas no status EM PREPARO
+GET {{baseUrl}}/orders?status=PREPARING
+Accept: application/json
+
+### Buscar comanda/pedido por ID
+GET {{baseUrl}}/orders/1
+Accept: application/json
+
+### Criar novo pedido para a Mesa 1 (Comanda Digital do Cliente)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "type": "DINE_IN",
+  "tableId": 1,
+  "customerName": "Lucas Silva",
+  "notes": "Por favor caprichar no ponto da carne",
+  "items": [
+    {
+      "menuItemId": 1,
+      "quantity": 1,
+      "selectedOptionIds": [2, 4],
+      "notes": "Sem cebola"
+    },
+    {
+      "menuItemId": 4,
+      "quantity": 1
+    }
+  ]
+}
+
+### Avançar pedido para o próximo estágio no KDS (1-clique)
+### RECEIVED -> PREPARING -> READY -> DELIVERED
+POST {{baseUrl}}/orders/1/advance
+Accept: application/json
+
+### Atualizar status especificamente com validação da Máquina de Estados
+PATCH {{baseUrl}}/orders/1/status
+Content-Type: application/json
+
+{
+  "status": "PREPARING"
+}
