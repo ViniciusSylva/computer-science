@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { prisma } from "../prisma";
 import { OrderStatus, OrderType, TableStatus } from "@prisma/client";
 import { OrderStateMachine } from "../services/order-state-machine";
+import { OrderEventsService } from "../services/order-events.service";
 
 export const OrderController = {
   /**
@@ -200,6 +201,9 @@ export const OrderController = {
         });
       });
 
+      // Notificar clientes SSE conectados (KDS e Comanda) em tempo real
+      OrderEventsService.broadcast("ORDER_CREATED", newOrder);
+
       return res.status(201).json(newOrder);
     } catch (error: any) {
       return res.status(500).json({ error: "Erro ao criar pedido", details: error.message });
@@ -270,6 +274,9 @@ export const OrderController = {
 
         return updated;
       });
+
+      // Notificar clientes SSE conectados (KDS e Comanda) sobre mudança de status
+      OrderEventsService.broadcast("ORDER_UPDATED", updatedOrder);
 
       return res.json(updatedOrder);
     } catch (error: any) {
