@@ -118,5 +118,3 @@ O servidor estará disponível em: **`http://localhost:3001`**
 | `POST` | `/api/orders` | Criação de novo pedido (comanda/cliente) |
 | `PATCH` | `/api/orders/:id/status` | Transição de estado com validação |
 | `POST` | `/api/orders/:id/advance` | Atalho de avanço rápido para o KDS |
-
-teste
