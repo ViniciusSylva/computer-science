@@ -119,3 +119,4 @@ O servidor estará disponível em: **`http://localhost:3001`**
 | `PATCH` | `/api/orders/:id/status` | Transição de estado com validação |
 | `POST` | `/api/orders/:id/advance` | Atalho de avanço rápido para o KDS |
 
+teste
