@@ -29,6 +29,12 @@ export const api = {
     return res.json();
   },
 
+  async getOrderById(orderId: number) {
+    const res = await fetch(`${API_BASE_URL}/orders/${orderId}`);
+    if (!res.ok) throw new Error('Falha ao carregar pedido');
+    return res.json();
+  },
+
   async advanceOrderStatus(orderId: number) {
     const res = await fetch(`${API_BASE_URL}/orders/${orderId}/advance`, {
       method: 'POST',
@@ -64,5 +70,21 @@ export const api = {
       throw new Error(err.error || 'Erro ao criar pedido');
     }
     return res.json();
+  },
+
+  /**
+   * Conecta ao stream SSE de eventos de pedidos em tempo real
+   */
+  subscribeToOrderStream(onMessage: (data: any) => void): EventSource {
+    const eventSource = new EventSource(`${API_BASE_URL}/orders/stream`);
+    eventSource.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        onMessage(payload);
+      } catch (e) {
+        console.error('Erro ao processar evento SSE:', e);
+      }
+    };
+    return eventSource;
   },
 };
