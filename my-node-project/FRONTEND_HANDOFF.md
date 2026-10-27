@@ -97,28 +97,59 @@ $$\text{RECEIVED} \longrightarrow \text{PREPARING} \longrightarrow \text{READY} 
 
 ---
 
-## 5. Instruções para o Novo Chat (Frontend)
+## 5. Estrutura Modular das Telas Criadas (Prontas para Extensão)
 
-O novo chat deve implementar a interface em `my-node-project/frontend`:
-* A base já está iniciada com **React 18 + Vite + Tailwind CSS** (`frontend/package.json`).
-* Para rodar o frontend:
+A arquitetura do frontend foi organizada em páginas e componentes modulares dentro de `frontend/src`:
+
+```text
+my-node-project/frontend/src/
+├── components/
+│   ├── Header.tsx             # Navbar com abas (KDS, Cardápio, Comanda, Mesas) e badge de status da API
+│   ├── ModalOptionSelect.tsx  # Modal de personalização (ponto da carne, adicionais pagos, observações)
+│   └── CartDrawer.tsx         # Carrinho de compras lateral (itens, total e envio do pedido)
+├── pages/
+│   ├── KDSPage.tsx            # TELA 1: Painel KDS (Kanban de 4 colunas + conexão SSE + avanço de 1 clique)
+│   ├── MenuPage.tsx           # TELA 2: Cardápio Digital (seletor de mesa, categorias e produtos)
+│   ├── OrderTrackingPage.tsx  # TELA 3: Comanda Digital (linha do tempo visual do pedido e extrato)
+│   └── TablesPage.tsx         # TELA 4: Gestão do Salão (grid visual das mesas livres vs ocupadas)
+├── services/
+│   └── api.ts                 # Cliente HTTP centralizado e helper de subscrição SSE (subscribeToOrderStream)
+├── types.ts                   # Interfaces TypeScript completas (Order, MenuItem, Category, Table, etc.)
+├── App.tsx                    # Orquestrador principal que renderiza a Header e alterna as páginas
+├── main.tsx
+└── index.css                  # Tailwind CSS
+```
+
+---
+
+## 6. Instruções para o Novo Chat (Frontend)
+
+O novo chat deve abrir a pasta `my-node-project/frontend`:
+* Para rodar o frontend em modo desenvolvimento:
   ```bash
   cd my-node-project/frontend
   npm run dev
   ```
-  (Acessível em `http://localhost:5173`).
+  (Acessível no navegador em `http://localhost:5173`).
+* Para rodar o backend localmente:
+  ```bash
+  cd my-node-project/backend
+  npm run dev
+  ```
+  (Acessível em `http://localhost:3001`).
 
-### Telas que o Frontend deve conter:
-1. **Painel KDS (Kitchen Display System)**:
-   * Colunas da esteira: `RECEBIDO` | `EM PREPARO` | `PRONTO` | `ENTREGUE`.
-   * Conexão com `/api/orders/stream` via `new EventSource('http://localhost:3001/api/orders/stream')` para receber novos pedidos e atualizações em tempo real sem recarregar a página.
-   * Botão de ação rápida chamando `POST /api/orders/:id/advance`.
-2. **Cardápio Digital & Comanda do Cliente**:
-   * Seleção de mesa (ou delivery).
-   * Navegação nas categorias consumindo `/api/categories`.
-   * Modal de opcionais (seleção de ponto da carne, adicionais pagos, etc.).
-   * Carrinho e envio do pedido (`POST /api/orders`).
-   * Acompanhamento visual da comanda em tempo real.
-3. **Visão do Salão (Mesas)**:
-   * Grid com as mesas consumindo `/api/tables`, com visualização de mesas livres vs ocupadas.
+### O que o novo chat pode aprofundar em cada tela:
+1. **`KDSPage.tsx`**:
+   * Já possui a estrutura Kanban, chamada de `getOrders()` e conexão SSE via `subscribeToOrderStream`.
+   * Pode adicionar efeitos visuais de alerta sonoro ao receber novo pedido e temporizadores de contagem regressiva por pedido.
+2. **`MenuPage.tsx` + `ModalOptionSelect.tsx` + `CartDrawer.tsx`**:
+   * Já listam as categorias e produtos de `GET /api/categories`.
+   * Integrar o estado do carrinho global para que, ao clicar em "Personalizar", abra o `ModalOptionSelect`, adicione ao `CartDrawer` e dispare `api.createOrder(...)`.
+3. **`OrderTrackingPage.tsx`**:
+   * Já possui a linha do tempo visual de 4 estágios (`RECEBIDO` ➔ `NA COZINHA` ➔ `PRONTO` ➔ `ENTREGUE`) e extrato da conta.
+   * Pode ser vinculado diretamente ao ID da última comanda criada pelo cliente.
+4. **`TablesPage.tsx`**:
+   * Já exibe o grid de mesas identificando mesas livres (`AVAILABLE`) e ocupadas (`OCCUPIED`).
+   * Pode adicionar ação de fechar comanda ou abrir comanda diretamente da mesa.
+
 
