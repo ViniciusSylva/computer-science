@@ -27,5 +27,8 @@ A full-stack project management application built in a monorepo architecture. Th
 - Add client-side and server-side input sanitization for enhanced security.
 - Integrate user authentication and JWT-based authorization across API endpoints.
 
+## 🤝 Como Contribuir
+Consulte o nosso [Guia de Contribuição](CONTRIBUTING.md) para detalhes sobre branching, Conventional Commits e o fluxo de abertura de Pull Requests.
+
 ## 🌎 About me
 I am a Computer Science student in Brazil, focused on learning and continuous growth. I currently work at a technology company in the backend and automation field. I am still exploring different paths within technology to find my specialization, while developing practical projects and strengthening my foundation.
