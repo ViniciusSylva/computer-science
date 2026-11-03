@@ -1,34 +1,31 @@
-# Full-Stack Project Manager
-
----
+# Computer Science Portfolio
 
 ## 📌 About
-A full-stack project management application built in a monorepo architecture. The project combines a dynamic PHP frontend with a Node.js REST API backed by a MySQL database via Prisma ORM, featuring asynchronous UI updates and modern styling.
+A comprehensive monorepo consolidating academic coursework, software engineering projects, algorithms research, and systems design developed throughout my Computer Science journey. It houses production-grade applications including a full-stack Restaurant SaaS platform, an Object-Oriented Parking Management system, algorithm benchmarking suites, and backend automation modules.
 
 ## 🚀 Technologies
-- Node.js & Express
-- Prisma ORM & MySQL
-- PHP
-- JavaScript (Fetch API & cURL)
-- HTML/CSS
+- TypeScript & JavaScript (Node.js, Express, React, Vite)
+- Java (JDK 11+, Object-Oriented Design, UML)
+- Python (Matplotlib, OpenPyXL, Automation scripts)
+- C++ (C++17, Lomuto Quicksort, Performance benchmarking)
+- PostgreSQL 16 & MySQL (Prisma ORM, Docker Compose)
+- Tailwind CSS & HTML5
 
 ## 🧠 What I learned
-- Integrating heterogeneous full-stack architectures (PHP frontend consuming a Node.js REST API).
-- Implementing asynchronous HTTP methods (`GET`, `POST`, `DELETE`) with the native Fetch API for real-time DOM updates without page reloads.
-- Applying the **PRG (Post/Redirect/Get)** pattern in PHP to prevent duplicate form submissions on page refresh.
-- Handling cross-origin requests by configuring **CORS** middleware in Express to allow explicit headers and HTTP methods.
-- Separating frontend concerns into dedicated CSS stylesheets with custom responsive variables and visual feedback components.
+- Designing robust full-stack architectures integrating relational databases, event-driven communication (Server-Sent Events), and REST APIs.
+- Domain-driven object modeling, abstraction principles, and translating formal UML specifications into object-oriented Java solutions.
+- Rigorous empirical algorithm analysis, measuring Big-O time complexity and asymptotic behavior across large datasets.
+- Clean development practices with Conventional Commits, unit/integration testing harnesses, and containerized local infrastructure.
 
 ## ⚠️ Challenges
-- **Form Resubmission on Refresh:** Solved by refactoring the POST handling logic to use PHP sessions and the PRG pattern (`header('Location: index.php')`).
-- **CORS Blockers on Asynchronous Deletions:** Resolved by enabling CORS middleware in Express and explicitly allowing preflight `OPTIONS` and `DELETE` methods.
-- **Graceful Error Handling:** Handled non-2xx API HTTP responses in the client to display styled visual alerts instead of breaking the execution flow or relying on native browser alerts.
+- **Monorepo Cohesion:** Structuring and maintaining multiple independent projects with varying tech stacks, compilation models, and dependencies within a single repository.
+- **Real-Time Data Flow:** Ensuring low-latency, resilient bidirectional and streaming updates (SSE) between production-line dashboards and relational backends.
+- **Algorithmic Edge Cases:** Managing deep recursion stack overflows during worst-case Quicksort partitions through low-level memory allocation configurations.
 
 ## 🔧 Improvements
-- Implement updating (`PUT`/`PATCH`) capabilities for existing projects.
-- Add client-side and server-side input sanitization for enhanced security.
-- Integrate user authentication and JWT-based authorization across API endpoints.
-
+- Implement continuous integration (CI) workflows with GitHub Actions for automated linting and multi-project test runs.
+- Add live containerized demonstrations and cloud deployment templates for showcased web applications.
+- Expand data structures and algorithms coverage with graph traversal and dynamic programming benchmarks.
 
 ## 🌎 About me
 I am a Computer Science student in Brazil, focused on learning and continuous growth. I currently work at a technology company in the backend and automation field. I am still exploring different paths within technology to find my specialization, while developing practical projects and strengthening my foundation.
