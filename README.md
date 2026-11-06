@@ -1,7 +1,24 @@
 # Computer Science Portfolio
 
 ## 📌 About
-A comprehensive monorepo consolidating academic coursework, software engineering projects, algorithms research, and systems design developed throughout my Computer Science journey. It houses production-grade applications including a full-stack Restaurant SaaS platform, an Object-Oriented Parking Management system, algorithm benchmarking suites, and backend automation modules.
+A comprehensive monorepo consolidating academic coursework, software engineering projects, algorithms research, and systems design developed throughout my Computer Science journey. The repository is organized chronologically by academic semester and subject, housing production-grade applications, empirical benchmark suites, and laboratory integration exercises.
+
+## 🗂️ Academic Structure & Subjects Index
+
+### 📍 Semester 4 (`semester-4/`)
+
+* **Algorithms and Data Structures (`algorithms-and-data-structures/`)**
+  * [`algorithm-studies/`](file:///semester-4/algorithms-and-data-structures/algorithm-studies): Empirical performance analysis and benchmarking suite for the **Quicksort** algorithm (Lomuto partition) in C++17, featuring descriptive statistics calculation and automated visualization generation (boxplots, logarithmic bar charts, and Excel export) with Python.
+
+* **Programming Laboratory (`programming-laboratory/`)**
+  * [`my-node-project/`](file:///semester-4/programming-laboratory/my-node-project): Full-stack Restaurant SaaS platform featuring digital menu management, customizable option groups, finite order state machine, and real-time Kitchen Display System (KDS) via Server-Sent Events (SSE).
+  * [`parking-system/`](file:///semester-4/programming-laboratory/parking-system): Object-Oriented rotary parking management system written in pure Java (JDK 11+), modeling vehicles, tariffs, grace periods, and spot occupancy following formal UML specifications.
+  * [`programming-laboratory/`](file:///semester-4/programming-laboratory/programming-laboratory): Practical laboratory modules covering heterogeneous integration architectures (PHP web frontend interacting with Node.js/Express REST APIs and MySQL via Prisma ORM).
+
+### 📍 Semester 5 (`semester-5/`)
+* *(Upcoming semester workspace)*
+
+---
 
 ## 🚀 Technologies
 - TypeScript & JavaScript (Node.js, Express, React, Vite)
@@ -12,6 +29,7 @@ A comprehensive monorepo consolidating academic coursework, software engineering
 - Tailwind CSS & HTML5
 
 ## 🧠 What I learned
+- Organizing complex multi-language codebases using modular semester/subject hierarchies.
 - Designing robust full-stack architectures integrating relational databases, event-driven communication (Server-Sent Events), and REST APIs.
 - Domain-driven object modeling, abstraction principles, and translating formal UML specifications into object-oriented Java solutions.
 - Rigorous empirical algorithm analysis, measuring Big-O time complexity and asymptotic behavior across large datasets.
