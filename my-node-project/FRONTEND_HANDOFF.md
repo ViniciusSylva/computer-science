@@ -95,6 +95,15 @@ $$\text{RECEIVED} \longrightarrow \text{PREPARING} \longrightarrow \text{READY} 
 | `GET` | `/api/tables/:id` | Detalhes da mesa com comanda ativa. |
 | `PATCH` | `/api/tables/:id/status` | Altera status manualmente (`{ "status": "AVAILABLE" }`). |
 
+### 4.4. Cadastro de contas (planejado; ainda não implementado no backend)
+O schema Prisma e as rotas atuais não definem usuários nem cadastro de contas. A página `RegistrationPage` está preparada para o seguinte contrato futuro:
+
+| Método | Endpoint | Payload JSON esperado |
+|:---|:---|:---|
+| `POST` | `/api/auth/register` | `{ "name": "Nome completo", "email": "voce@exemplo.com", "password": "senha com pelo menos 8 caracteres" }` |
+
+A confirmação de senha é validada no navegador e não é enviada. O backend deverá validar os dados e armazenar a senha com hash antes de habilitar o cadastro.
+
 ---
 
 ## 5. Estrutura Modular das Telas Criadas (Prontas para Extensão)
@@ -104,14 +113,15 @@ A arquitetura do frontend foi organizada em páginas e componentes modulares den
 ```text
 my-node-project/frontend/src/
 ├── components/
-│   ├── Header.tsx             # Navbar com abas (KDS, Cardápio, Comanda, Mesas) e badge de status da API
+│   ├── Header.tsx             # Navbar com abas (KDS, Cardápio, Comanda, Mesas, Cadastro) e badge de status da API
 │   ├── ModalOptionSelect.tsx  # Modal de personalização (ponto da carne, adicionais pagos, observações)
 │   └── CartDrawer.tsx         # Carrinho de compras lateral (itens, total e envio do pedido)
 ├── pages/
 │   ├── KDSPage.tsx            # TELA 1: Painel KDS (Kanban de 4 colunas + conexão SSE + avanço de 1 clique)
 │   ├── MenuPage.tsx           # TELA 2: Cardápio Digital (seletor de mesa, categorias e produtos)
 │   ├── OrderTrackingPage.tsx  # TELA 3: Comanda Digital (linha do tempo visual do pedido e extrato)
-│   └── TablesPage.tsx         # TELA 4: Gestão do Salão (grid visual das mesas livres vs ocupadas)
+│   ├── TablesPage.tsx         # TELA 4: Gestão do Salão (grid visual das mesas livres vs ocupadas)
+│   └── RegistrationPage.tsx   # Formulário de conta; endpoint de cadastro pendente no backend
 ├── services/
 │   └── api.ts                 # Cliente HTTP centralizado e helper de subscrição SSE (subscribeToOrderStream)
 ├── types.ts                   # Interfaces TypeScript completas (Order, MenuItem, Category, Table, etc.)
@@ -151,5 +161,4 @@ O novo chat deve abrir a pasta `my-node-project/frontend`:
 4. **`TablesPage.tsx`**:
    * Já exibe o grid de mesas identificando mesas livres (`AVAILABLE`) e ocupadas (`OCCUPIED`).
    * Pode adicionar ação de fechar comanda ou abrir comanda diretamente da mesa.
-
 

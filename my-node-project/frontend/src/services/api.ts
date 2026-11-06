@@ -1,3 +1,5 @@
+import type { RegisterAccountRequest } from '../types';
+
 const API_BASE_URL = 'http://localhost:3001/api';
 
 export const api = {
@@ -33,6 +35,29 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}/orders/${orderId}`);
     if (!res.ok) throw new Error('Falha ao carregar pedido');
     return res.json();
+  },
+
+  /**
+   * Contrato esperado para a futura rota de cadastro de contas.
+   * A confirmação da senha é validada na interface e não é enviada.
+   */
+  async registerAccount(data: RegisterAccountRequest): Promise<void> {
+    const res = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (res.status === 404) {
+      throw new Error(
+        'O cadastro de contas ainda não está disponível: o backend não implementa POST /api/auth/register.'
+      );
+    }
+
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error || 'Não foi possível cadastrar a conta.');
+    }
   },
 
   async advanceOrderStatus(orderId: number) {

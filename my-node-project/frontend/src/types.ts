@@ -2,6 +2,12 @@ export type OrderStatus = 'RECEIVED' | 'PREPARING' | 'READY' | 'DELIVERED' | 'CA
 export type OrderType = 'DINE_IN' | 'DELIVERY' | 'TAKEAWAY';
 export type TableStatus = 'AVAILABLE' | 'OCCUPIED' | 'RESERVED';
 
+export interface RegisterAccountRequest {
+  name: string;
+  email: string;
+  password: string;
+}
+
 export interface OptionItem {
   id: number;
   optionGroupId: number;
