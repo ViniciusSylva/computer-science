@@ -3,6 +3,7 @@ import { Header, ActiveTab } from './components/Header';
 import { KDSPage } from './pages/KDSPage';
 import { MenuPage } from './pages/MenuPage';
 import { OrderTrackingPage } from './pages/OrderTrackingPage';
+import { RegistrationPage } from './pages/RegistrationPage';
 import { TablesPage } from './pages/TablesPage';
 import { api } from './services/api';
 
@@ -16,7 +17,7 @@ import { api } from './services/api';
  * 4. TablesPage: Gestão de Mesas do Salão
  */
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('kds');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('register');
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -44,6 +45,7 @@ export const App: React.FC = () => {
         {activeTab === 'menu' && <MenuPage />}
         {activeTab === 'tab' && <OrderTrackingPage />}
         {activeTab === 'tables' && <TablesPage />}
+        {activeTab === 'register' && <RegistrationPage />}
       </main>
     </div>
   );

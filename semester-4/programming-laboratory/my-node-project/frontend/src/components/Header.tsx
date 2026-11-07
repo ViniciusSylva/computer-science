@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type ActiveTab = 'kds' | 'menu' | 'tab' | 'tables';
+export type ActiveTab = 'kds' | 'menu' | 'tab' | 'tables' | 'register';
 
 interface HeaderProps {
   activeTab: ActiveTab;
@@ -80,6 +80,18 @@ export const Header: React.FC<HeaderProps> = ({
             <span>🪑</span>
             <span>Mesas</span>
           </button>
+
+          <button
+            onClick={() => setActiveTab('register')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+              activeTab === 'register'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+            }`}
+          >
+            <span aria-hidden="true">👤</span>
+            <span>Cadastro</span>
+          </button>
         </nav>
 
         {/* Backend Online Status */}
@@ -105,4 +117,3 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
-
