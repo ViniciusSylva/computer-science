@@ -10,7 +10,7 @@ describe('API Route Integration Tests (HTTP Layer & Validations)', () => {
 
       assert.equal(response.status, 200);
       assert.equal(response.body.status, 'ok');
-      assert.equal(response.body.service, 'restaurant-saas-api');
+      assert.equal(response.body.service, 'restaurant-management-api');
       assert.ok(response.body.timestamp);
     });
 
@@ -52,6 +52,24 @@ describe('API Route Integration Tests (HTTP Layer & Validations)', () => {
       assert.equal(response.status, 400);
       assert.equal(response.body.error, 'Status fornecido é inválido.');
     });
+
+    it('POST /api/orders/:id/messages should reject an invalid order identifier (400)', async () => {
+      const response = await request(app)
+        .post('/api/orders/not-a-number/messages')
+        .send({ senderRole: 'KITCHEN', senderName: 'Cozinha', message: 'Olá' });
+
+      assert.equal(response.status, 400);
+      assert.equal(response.body.error, 'Identificador do pedido inválido.');
+    });
+
+    it('POST /api/orders/:id/messages should reject an empty message (400)', async () => {
+      const response = await request(app)
+        .post('/api/orders/1/messages')
+        .send({ senderRole: 'KITCHEN', senderName: 'Cozinha', message: '   ' });
+
+      assert.equal(response.status, 400);
+      assert.equal(response.body.error, 'A mensagem deve ter entre 1 e 1000 caracteres.');
+    });
   });
 
   describe('Category Routes Input Validation', () => {
@@ -86,6 +104,22 @@ describe('API Route Integration Tests (HTTP Layer & Validations)', () => {
       assert.equal(response.body.error, 'Número da mesa é obrigatório.');
     });
 
+    it('POST /api/tables should reject a non-positive integer number (400)', async () => {
+      const response = await request(app)
+        .post('/api/tables')
+        .send({ number: 1.5, capacity: 4 });
+
+      assert.equal(response.status, 400);
+      assert.equal(response.body.error, 'Número da mesa deve ser um inteiro positivo.');
+    });
+
+    it('DELETE /api/tables/:id should reject an invalid identifier (400)', async () => {
+      const response = await request(app).delete('/api/tables/not-a-number');
+
+      assert.equal(response.status, 400);
+      assert.equal(response.body.error, 'Identificador da mesa inválido.');
+    });
+
     it('PATCH /api/tables/:id/status should reject invalid table status (400)', async () => {
       const response = await request(app)
         .patch('/api/tables/1/status')
@@ -94,6 +128,14 @@ describe('API Route Integration Tests (HTTP Layer & Validations)', () => {
       assert.equal(response.status, 400);
       assert.equal(response.body.error, 'Status inválido.');
     });
+
+    it('PATCH /api/tables/:id should reject invalid capacity (400)', async () => {
+      const response = await request(app)
+        .patch('/api/tables/1')
+        .send({ capacity: 0 });
+
+      assert.equal(response.status, 400);
+      assert.equal(response.body.error, 'Capacidade deve ser um inteiro positivo.');
+    });
   });
 });
-

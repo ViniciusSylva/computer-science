@@ -27,6 +27,11 @@ enum TableStatus {
   RESERVED
 }
 
+enum ChatSenderRole {
+  TABLE_CUSTOMER
+  KITCHEN
+}
+
 model Table {
   id        Int         @id @default(autoincrement())
   number    Int         @unique
@@ -64,16 +69,16 @@ model MenuItem {
 }
 
 model OptionGroup {
-  id          Int          @id @default(autoincrement())
-  menuItemId  Int
-  menuItem    MenuItem     @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
-  title       String
-  minSelect   Int          @default(0)
-  maxSelect   Int          @default(1)
-  isRequired  Boolean      @default(false)
-  options     OptionItem[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id         Int          @id @default(autoincrement())
+  menuItemId Int
+  menuItem   MenuItem     @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  title      String
+  minSelect  Int          @default(0)
+  maxSelect  Int          @default(1)
+  isRequired Boolean      @default(false)
+  options    OptionItem[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
 }
 
 model OptionItem {
@@ -88,20 +93,33 @@ model OptionItem {
 }
 
 model Order {
-  id              Int         @id @default(autoincrement())
-  code            String      @unique
-  type            OrderType   @default(DINE_IN)
-  status          OrderStatus @default(RECEIVED)
+  id              Int                @id @default(autoincrement())
+  code            String             @unique
+  type            OrderType          @default(DINE_IN)
+  status          OrderStatus        @default(RECEIVED)
   tableId         Int?
-  table           Table?      @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  table           Table?             @relation(fields: [tableId], references: [id], onDelete: SetNull)
   customerName    String?
   customerPhone   String?
   deliveryAddress String?
-  totalAmount     Float       @default(0.0)
+  totalAmount     Float              @default(0.0)
   notes           String?
   items           OrderItem[]
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  messages        OrderChatMessage[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+}
+
+model OrderChatMessage {
+  id         Int            @id @default(autoincrement())
+  orderId    Int
+  order      Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  senderRole ChatSenderRole
+  senderName String
+  message    String
+  createdAt  DateTime       @default(now())
+
+  @@index([orderId, createdAt])
 }
 
 model OrderItem {
@@ -128,4 +146,3 @@ model OrderItemOption {
   name         String
   price        Float
 }
-
