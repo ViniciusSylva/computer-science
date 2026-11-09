@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { prisma } from "../prisma";
-import { OrderStatus, OrderType, TableStatus } from "@prisma/client";
+import { OrderStatus, OrderType } from "@prisma/client";
 import { OrderStateMachine } from "../services/order-state-machine";
 import { OrderEventsService } from "../services/order-events.service";
 
@@ -164,17 +164,7 @@ export const OrderController = {
       const randomSuffix = Math.floor(1000 + Math.random() * 9000);
       const code = `#PED-${randomSuffix}`;
 
-      // Criar o pedido dentro de uma transação
-      const newOrder = await prisma.$transaction(async (tx) => {
-        // Se for mesa, atualizar status da mesa para OCCUPIED
-        if (tableId) {
-          await tx.table.update({
-            where: { id: Number(tableId) },
-            data: { status: TableStatus.OCCUPIED },
-          });
-        }
-
-        return tx.order.create({
+      const newOrder = await prisma.order.create({
           data: {
             code,
             type: type as OrderType,
@@ -198,7 +188,6 @@ export const OrderController = {
               },
             },
           },
-        });
       });
 
       // Notificar clientes SSE conectados (KDS e Comanda) em tempo real
@@ -238,8 +227,7 @@ export const OrderController = {
         return res.status(400).json({ error: validationError.message });
       }
 
-      const updatedOrder = await prisma.$transaction(async (tx) => {
-        const updated = await tx.order.update({
+      const updatedOrder = await prisma.order.update({
           where: { id },
           data: { status: nextStatus },
           include: {
@@ -251,28 +239,6 @@ export const OrderController = {
               },
             },
           },
-        });
-
-        // Se o pedido foi entregue ou cancelado e está associado a uma mesa,
-        // verificar se existem outros pedidos ativos na mesa
-        if ((nextStatus === OrderStatus.DELIVERED || nextStatus === OrderStatus.CANCELED) && updated.tableId) {
-          const activeOrdersCount = await tx.order.count({
-            where: {
-              tableId: updated.tableId,
-              status: { in: [OrderStatus.RECEIVED, OrderStatus.PREPARING, OrderStatus.READY] },
-            },
-          });
-
-          // Se não há outros pedidos ativos na mesa, libera a mesa
-          if (activeOrdersCount === 0) {
-            await tx.table.update({
-              where: { id: updated.tableId },
-              data: { status: TableStatus.AVAILABLE },
-            });
-          }
-        }
-
-        return updated;
       });
 
       // Notificar clientes SSE conectados (KDS e Comanda) sobre mudança de status
@@ -310,5 +276,31 @@ export const OrderController = {
       return res.status(500).json({ error: "Erro ao avançar pedido", details: error.message });
     }
   },
-};
 
+  /**
+   * Retornar status para a etapa anterior (Desfazer avanço indevido)
+   * DELIVERED -> READY -> PREPARING -> RECEIVED
+   */
+  async revertStatus(req: Request, res: Response) {
+    try {
+      const id = Number(req.params.id);
+
+      const order = await prisma.order.findUnique({ where: { id } });
+      if (!order) {
+        return res.status(404).json({ error: "Pedido não encontrado." });
+      }
+
+      const prevStatus = OrderStateMachine.getPreviousStatus(order.status);
+      if (!prevStatus) {
+        return res.status(400).json({
+          error: `O pedido já se encontra no status inicial "${order.status}" e não pode ser retornado.`,
+        });
+      }
+
+      req.body.status = prevStatus;
+      return OrderController.updateStatus(req, res);
+    } catch (error: any) {
+      return res.status(500).json({ error: "Erro ao retornar pedido", details: error.message });
+    }
+  },
+};

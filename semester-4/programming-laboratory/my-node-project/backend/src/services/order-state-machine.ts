@@ -7,9 +7,9 @@ import { OrderStatus } from "@prisma/client";
  */
 export const ORDER_STATUS_FLOW: Record<OrderStatus, OrderStatus[]> = {
   RECEIVED: [OrderStatus.PREPARING, OrderStatus.CANCELED],
-  PREPARING: [OrderStatus.READY, OrderStatus.CANCELED],
-  READY: [OrderStatus.DELIVERED, OrderStatus.CANCELED],
-  DELIVERED: [], // Estado final
+  PREPARING: [OrderStatus.READY, OrderStatus.RECEIVED, OrderStatus.CANCELED],
+  READY: [OrderStatus.DELIVERED, OrderStatus.PREPARING, OrderStatus.CANCELED],
+  DELIVERED: [OrderStatus.READY], // Permite desfazer entrega se avançado por engano
   CANCELED: [],  // Estado final
 };
 
@@ -33,6 +33,22 @@ export class OrderStateMachine {
         return OrderStatus.READY;
       case OrderStatus.READY:
         return OrderStatus.DELIVERED;
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Retorna a etapa anterior caso precise retornar o pedido
+   */
+  static getPreviousStatus(current: OrderStatus): OrderStatus | null {
+    switch (current) {
+      case OrderStatus.PREPARING:
+        return OrderStatus.RECEIVED;
+      case OrderStatus.READY:
+        return OrderStatus.PREPARING;
+      case OrderStatus.DELIVERED:
+        return OrderStatus.READY;
       default:
         return null;
     }
