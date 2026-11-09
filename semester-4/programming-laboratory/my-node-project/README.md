@@ -1,7 +1,7 @@
-# Restaurant SaaS & Digital Menu
+# Restaurant Management & Digital Menu
 
 ## 📌 About
-A full-stack SaaS platform designed for end-to-end restaurant and kitchen operations. It integrates physical table management, categorized digital menus with customizable option groups, a finite state machine for order lifecycles, and a real-time Kitchen Display System (KDS) powered by Server-Sent Events (SSE).
+A full-stack application designed for end-to-end restaurant and kitchen operations. It integrates physical table management, categorized digital menus with customizable option groups, a finite state machine for order lifecycles, and a real-time Kitchen Display System (KDS) powered by Server-Sent Events (SSE).
 
 ## 🚀 Technologies
 - TypeScript (Strict mode) & Node.js
