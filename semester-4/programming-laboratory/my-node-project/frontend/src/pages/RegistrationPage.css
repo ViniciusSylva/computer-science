@@ -3,9 +3,7 @@
   display: grid;
   place-items: center;
   padding: 2rem 1rem;
-  background:
-    radial-gradient(ellipse at 12% 12%, rgb(191 219 254 / 45%), transparent 42%),
-    #f1f5f9;
+  background: #020617;
   border-radius: 1.5rem;
 }
 
@@ -14,10 +12,10 @@
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(20rem, 1.1fr);
   overflow: hidden;
-  background: #fff;
-  border: 1px solid #dbeafe;
+  background: #0f172a;
+  border: 1px solid #1e293b;
   border-radius: 1.5rem;
-  box-shadow: 0 24px 60px rgb(15 23 42 / 12%);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
 }
 
 .registration-intro {
@@ -26,7 +24,8 @@
   align-items: flex-start;
   padding: 3rem 2.5rem;
   color: #fff;
-  background: linear-gradient(145deg, #1d4ed8 0%, #1e40af 58%, #1e3a8a 100%);
+  background: linear-gradient(145deg, #1e3a8a 0%, #0f172a 100%);
+  border-right: 1px solid #1e293b;
 }
 
 .registration-mark {
@@ -35,68 +34,100 @@
   height: 2.75rem;
   place-items: center;
   margin-bottom: 2.25rem;
-  color: #1d4ed8;
-  background: #fff;
+  background: #f59e0b;
   border-radius: 0.9rem;
-  font-size: 1.25rem;
-  font-weight: 800;
+  font-size: 1.4rem;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
 }
 
 .registration-eyebrow {
   margin: 0 0 0.65rem;
-  color: #93c5fd;
+  color: #60a5fa;
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.14em;
 }
 
 .registration-intro h1 {
-  max-width: 20rem;
+  max-width: 23rem;
   margin: 0;
   font-size: clamp(1.7rem, 3vw, 2.25rem);
   line-height: 1.15;
   letter-spacing: -0.035em;
+  color: #f8fafc;
 }
 
 .registration-intro-copy {
+  max-width: 24rem;
   margin: 1rem 0 0;
-  color: #dbeafe;
+  color: #cbd5e1;
   font-size: 0.95rem;
   line-height: 1.65;
 }
 
-.registration-benefits {
+.registration-feature-list {
   display: grid;
-  gap: 0.9rem;
-  margin: 2rem 0 0;
+  gap: 1.1rem;
+  width: 100%;
+  margin: 2rem 0;
   padding: 0;
   list-style: none;
-  color: #eff6ff;
-  font-size: 0.875rem;
 }
 
-.registration-benefits li::before {
-  content: "✓";
-  margin-right: 0.65rem;
+.registration-feature-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
   color: #bfdbfe;
-  font-weight: 800;
+}
+
+.registration-feature-list li > span:first-child {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 2.25rem;
+  place-items: center;
+  border: 1px solid rgba(147, 197, 253, 0.25);
+  border-radius: 0.7rem;
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.registration-feature-list strong,
+.registration-feature-list small {
+  display: block;
+}
+
+.registration-feature-list strong {
+  color: #f8fafc;
+  font-size: 0.9rem;
+}
+
+.registration-feature-list small {
+  margin-top: 0.2rem;
+  color: #bfdbfe;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.registration-intro-note {
+  margin-top: auto;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(96, 165, 250, 0.3);
+  color: #bfdbfe;
+  font-size: 0.8rem;
+  line-height: 1.5;
 }
 
 .registration-form-panel {
   padding: 3rem;
+  background: #0f172a;
 }
 
 .registration-heading h2 {
   margin: 0;
-  color: #0f172a;
+  color: #f8fafc;
   font-size: 1.75rem;
   letter-spacing: -0.035em;
-}
-
-.registration-heading > p:last-child {
-  margin: 0.55rem 0 0;
-  color: #64748b;
-  font-size: 0.9rem;
 }
 
 .registration-form {
@@ -111,7 +142,7 @@
 }
 
 .registration-field label {
-  color: #334155;
+  color: #cbd5e1;
   font-size: 0.82rem;
   font-weight: 700;
 }
@@ -120,9 +151,9 @@
   width: 100%;
   min-height: 2.85rem;
   padding: 0.7rem 0.85rem;
-  color: #0f172a;
-  background: #fff;
-  border: 1px solid #cbd5e1;
+  color: #f8fafc;
+  background: #1e293b;
+  border: 1px solid #334155;
   border-radius: 0.65rem;
   outline: none;
   font: inherit;
@@ -131,75 +162,53 @@
 }
 
 .registration-field input::placeholder {
-  color: #94a3b8;
+  color: #64748b;
 }
 
 .registration-field input:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgb(37 99 235 / 16%);
-}
-
-.registration-hint {
-  color: #64748b;
-  font-size: 0.75rem;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 .registration-submit {
-  min-height: 3rem;
-  margin-top: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 2.85rem;
+  margin-top: 0.5rem;
+  padding: 0.85rem 1rem;
   color: #fff;
   background: #2563eb;
-  border: 0;
-  border-radius: 0.7rem;
-  cursor: pointer;
-  font: inherit;
+  border: none;
+  border-radius: 0.75rem;
   font-size: 0.95rem;
   font-weight: 700;
-  transition: background-color 150ms ease, transform 150ms ease;
+  cursor: pointer;
+  transition: background 150ms ease;
 }
 
 .registration-submit:hover:not(:disabled) {
   background: #1d4ed8;
-  transform: translateY(-1px);
-}
-
-.registration-submit:focus-visible {
-  outline: 3px solid #93c5fd;
-  outline-offset: 3px;
-}
-
-.registration-submit:disabled {
-  cursor: wait;
-  opacity: 0.7;
-}
-
-.registration-privacy-note {
-  margin: 0;
-  color: #94a3b8;
-  font-size: 0.72rem;
-  line-height: 1.5;
-  text-align: center;
 }
 
 .registration-alert {
-  margin-top: 1.25rem;
-  padding: 0.8rem 0.9rem;
-  border: 1px solid transparent;
-  border-radius: 0.7rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
   font-size: 0.85rem;
-  line-height: 1.5;
+  margin-bottom: 1rem;
 }
 
 .registration-alert--success {
-  color: #166534;
-  background: #f0fdf4;
-  border-color: #bbf7d0;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .registration-alert--error {
-  color: #991b1b;
-  background: #fef2f2;
-  border-color: #fecaca;
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 @media (max-width: 720px) {
@@ -210,35 +219,26 @@
 
   .registration-card {
     grid-template-columns: 1fr;
-    max-width: 32rem;
   }
 
   .registration-intro {
-    padding: 1.75rem;
+    padding: 2rem 1.5rem;
   }
 
   .registration-mark {
     margin-bottom: 1.25rem;
   }
 
-  .registration-intro h1 {
-    max-width: 28rem;
-    font-size: 1.7rem;
+  .registration-feature-list {
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    margin-bottom: 0;
   }
 
-  .registration-benefits {
-    gap: 0.55rem;
-    margin-top: 1.1rem;
+  .registration-intro-note {
+    margin-top: 1.25rem;
   }
 
   .registration-form-panel {
-    padding: 1.75rem;
-  }
-}
-
-@media (max-width: 380px) {
-  .registration-intro,
-  .registration-form-panel {
-    padding: 1.35rem;
+    padding: 2rem 1.5rem;
   }
 }

@@ -1,20 +1,24 @@
 import React from 'react';
+import type { AuthSession } from '../types';
 
-export type ActiveTab = 'kds' | 'menu' | 'tab' | 'tables' | 'register';
+export type ActiveTab = 'kds' | 'menu' | 'tab' | 'tables' | 'register' | 'admin-clients';
 
 interface HeaderProps {
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
-  backendOnline: boolean | null;
+  backendOnline?: boolean | null;
+  session: AuthSession | null;
+  onLogout: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
   setActiveTab,
-  backendOnline,
+  session,
+  onLogout,
 }) => {
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+    <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50 shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand */}
         <div className="flex items-center gap-3">
@@ -22,95 +26,112 @@ export const Header: React.FC<HeaderProps> = ({
             🍔
           </div>
           <div>
-            <h1 className="font-bold text-base sm:text-lg text-slate-800 leading-tight">
-              RestôSaaS
-            </h1>
-            <p className="text-xs text-slate-500 hidden sm:block">
-              Gestor de Cardápio, Pedidos & KDS
-            </p>
+            <div className="flex items-center gap-2">
+              <h1 className="font-bold text-base sm:text-lg text-white leading-tight">
+                {(session?.role === 'RESTAURANT_OWNER' || session?.role === 'TABLE_CUSTOMER') &&
+                session.user.restaurantName
+                  ? session.user.restaurantName
+                  : session?.role === 'MASTER_ADMIN'
+                    ? 'Gestão'
+                    : 'Restaurante'}
+              </h1>
+
+              {/* Badge indicativo do perfil atual */}
+              {session?.role === 'MASTER_ADMIN' && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-900/80 text-blue-200 border border-blue-700">
+                  ADMIN
+                </span>
+              )}
+              {session?.role === 'RESTAURANT_OWNER' && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
+                  RESTAURANTE
+                </span>
+              )}
+              {session?.role === 'TABLE_CUSTOMER' && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800">
+                  MESA {session.user.tableNumber}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <nav className="flex items-center gap-1 sm:gap-2 bg-slate-100 p-1 rounded-xl">
-          <button
-            onClick={() => setActiveTab('kds')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-              activeTab === 'kds'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-            }`}
-          >
-            <span>🍳</span>
-            <span className="hidden md:inline">Painel</span> KDS
-          </button>
+        {/* Navigation Tabs - Dinâmicas de acordo com o Perfil */}
+        {(session?.role === 'RESTAURANT_OWNER' || session?.role === 'TABLE_CUSTOMER') && (
+        <nav className="flex items-center gap-1 sm:gap-2 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60">
+          {/* VISÃO 2: DONO DO RESTAURANTE / RECEPÇÃO / COZINHA */}
+          {session?.role === 'RESTAURANT_OWNER' && (
+            <>
+              <button
+                onClick={() => setActiveTab('kds')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                  activeTab === 'kds'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700'
+                }`}
+              >
+                <span>🍳</span>
+                <span>Cozinha</span>
+              </button>
 
-          <button
-            onClick={() => setActiveTab('menu')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-              activeTab === 'menu'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-            }`}
-          >
-            <span>🍔</span>
-            <span>Cardápio</span>
-          </button>
+              <button
+                onClick={() => setActiveTab('tables')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                  activeTab === 'tables'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700'
+                }`}
+              >
+                <span>🪑</span>
+                <span>Mesas & Recepção</span>
+              </button>
+            </>
+          )}
 
-          <button
-            onClick={() => setActiveTab('tab')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-              activeTab === 'tab'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-            }`}
-          >
-            <span>📋</span>
-            <span>Comanda</span>
-          </button>
+          {/* VISÃO 3: CLIENTE NA MESA (APENAS Cardápio e Comanda) */}
+          {session?.role === 'TABLE_CUSTOMER' && (
+            <>
+              <button
+                onClick={() => setActiveTab('menu')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                  activeTab === 'menu'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700'
+                }`}
+              >
+                <span>🍔</span>
+                <span>Cardápio</span>
+              </button>
 
-          <button
-            onClick={() => setActiveTab('tables')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-              activeTab === 'tables'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-            }`}
-          >
-            <span>🪑</span>
-            <span>Mesas</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('register')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-              activeTab === 'register'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-            }`}
-          >
-            <span aria-hidden="true">👤</span>
-            <span>Cadastro</span>
-          </button>
+              <button
+                onClick={() => setActiveTab('tab')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                  activeTab === 'tab'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700'
+                }`}
+              >
+                <span>📋</span>
+                <span>Meus Pedidos</span>
+              </button>
+            </>
+          )}
         </nav>
+        )}
 
-        {/* Backend Online Status */}
-        <div className="flex items-center gap-2 text-xs font-medium px-2.5 py-1 rounded-full border bg-white shadow-2xs">
-          {backendOnline === true ? (
-            <>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-emerald-700 hidden sm:inline">API Online</span>
-            </>
-          ) : backendOnline === false ? (
-            <>
-              <span className="w-2 h-2 rounded-full bg-rose-500"></span>
-              <span className="text-rose-700 hidden sm:inline">API Offline</span>
-            </>
-          ) : (
-            <>
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-              <span className="text-slate-500 hidden sm:inline">Conectando...</span>
-            </>
+        {/* Encerra a sessão atual e retorna à tela inicial */}
+        <div className="flex items-center gap-3">
+          {session && (
+            <button
+              onClick={onLogout}
+              className="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-rose-400 hover:border-rose-800 transition-colors cursor-pointer"
+            >
+              {session.role === 'TABLE_CUSTOMER' && session.user.lockedCustomerDisplay
+                ? 'Sair da tela'
+                : session.role === 'TABLE_CUSTOMER'
+                  ? 'Sair da mesa'
+                  : 'Sair'}
+            </button>
           )}
         </div>
       </div>
