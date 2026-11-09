@@ -2,10 +2,39 @@ export type OrderStatus = 'RECEIVED' | 'PREPARING' | 'READY' | 'DELIVERED' | 'CA
 export type OrderType = 'DINE_IN' | 'DELIVERY' | 'TAKEAWAY';
 export type TableStatus = 'AVAILABLE' | 'OCCUPIED' | 'RESERVED';
 
+export type UserRole = 'MASTER_ADMIN' | 'RESTAURANT_OWNER' | 'TABLE_CUSTOMER';
+
+export interface RestaurantClient {
+  id: string;
+  name: string;
+  restaurantName: string;
+  email: string;
+  phone?: string;
+  status: 'PENDING' | 'ACTIVE' | 'EXPIRED' | 'BLOCKED';
+  expirationDate: string; // ISO date string YYYY-MM-DD
+  plan: 'TRIAL' | 'MONTHLY' | 'ANNUAL';
+  createdAt: string;
+}
+
+export interface AuthSession {
+  role: UserRole;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    restaurantName?: string;
+    tableNumber?: number;
+    lockedCustomerDisplay?: boolean;
+    status?: 'PENDING' | 'ACTIVE' | 'EXPIRED' | 'BLOCKED';
+    expirationDate?: string;
+  };
+}
+
 export interface RegisterAccountRequest {
   name: string;
+  restaurantName?: string;
   email: string;
-  password: string;
+  password?: string;
 }
 
 export interface OptionItem {
@@ -69,6 +98,14 @@ export interface Table {
   status: TableStatus;
 }
 
+export interface CartLine {
+  id: string;
+  item: MenuItem;
+  quantity: number;
+  selectedOptions: OptionItem[];
+  notes: string;
+}
+
 export interface Order {
   id: number;
   code: string;
@@ -81,5 +118,14 @@ export interface Order {
   notes?: string | null;
   totalAmount: number;
   items: OrderItem[];
+  createdAt: string;
+}
+
+export interface OrderChatMessage {
+  id: number;
+  orderId: number;
+  senderRole: 'TABLE_CUSTOMER' | 'KITCHEN';
+  senderName: string;
+  message: string;
   createdAt: string;
 }
