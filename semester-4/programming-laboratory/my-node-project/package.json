@@ -1,7 +1,7 @@
 {
-  "name": "restaurant-saas-monorepo",
+  "name": "restaurant-management-monorepo",
   "version": "1.0.0",
-  "description": "Gestor de cardápio digital e Pedidos para Restaurantes (SaaS de Delivery/Mesa)",
+  "description": "Gestor de cardápio digital e pedidos para restaurantes",
   "scripts": {
     "install:all": "npm --prefix backend install && npm --prefix frontend install",
     "docker:up": "docker compose up -d",
@@ -15,7 +15,7 @@
     "frontend:dev": "npm --prefix frontend run dev",
     "frontend:build": "npm --prefix frontend run build"
   },
-  "keywords": ["restaurant", "saas", "express", "prisma", "postgres", "kds"],
+  "keywords": ["restaurant", "management", "express", "prisma", "postgres", "kds"],
   "author": "",
   "license": "ISC"
 }

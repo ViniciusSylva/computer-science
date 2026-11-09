@@ -1,5 +1,5 @@
 ### ==============================================================================
-### RESTAURANT SAAS - API REQUESTS COLLECTION (REST CLIENT / VS CODE)
+### RESTAURANT MANAGEMENT - API REQUESTS COLLECTION (REST CLIENT / VS CODE)
 ### ==============================================================================
 @baseUrl = http://localhost:3001/api
 

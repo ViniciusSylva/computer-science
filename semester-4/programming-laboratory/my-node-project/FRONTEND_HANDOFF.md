@@ -6,7 +6,7 @@
 
 ## 1. Visão Geral da Solução
 
-O projeto é um **SaaS para Gestão de Restaurantes, Cardápio Digital e Fila de Cozinha (KDS)** para atendimento presencial (mesas) e delivery.
+O projeto oferece **gestão de restaurantes, cardápio digital e fila de cozinha (KDS)** para atendimento presencial (mesas) e delivery.
 
 A stack e infraestrutura já implementadas no Backend e Banco de Dados são:
 * **Node.js**: `v24.19.0` (atendendo à faixa obrigatória de `22.x` a `24.x`).
@@ -14,7 +14,7 @@ A stack e infraestrutura já implementadas no Backend e Banco de Dados são:
 * **Banco de Dados**: PostgreSQL 16 provisionado via Docker (`postgres:16-alpine`), rodando na porta `5432`.
 * **ORM**: Prisma ORM v5 com migração executada (`20261020222605_init`) e `seed` com dados realistas já populados.
 * **Comunicação em Tempo Real**: Server-Sent Events (SSE) nativo via endpoint `GET /api/orders/stream`.
-* **Qualidade**: 21 testes automatizados (unitários da máquina de estados + integração HTTP via `supertest`) com 100% de aprovação.
+* **Qualidade**: testes automatizados unitários da máquina de estados e de integração HTTP via `supertest`.
 * **Middlewares Ativos**: CORS configurado (`http://localhost:5173` ou wildcard), JSON body parser, Request Logger no console e Error Handler global.
 
 ---
@@ -45,7 +45,7 @@ $$\text{RECEIVED} \longrightarrow \text{PREPARING} \longrightarrow \text{READY} 
 * **RECEIVED**: Pedido recebido na fila (cor amarela / laranja).
 * **PREPARING**: Cozinha iniciou a confecção (cor azul).
 * **READY**: Cozinha finalizou; pronto na bancada para o garçom entregar (cor verde).
-* **DELIVERED**: Pedido entregue ao cliente. Se for o último pedido ativo da mesa, o status da mesa é alterado automaticamente para `AVAILABLE`.
+* **DELIVERED**: Pedido entregue ao cliente. A entrega não altera o status da mesa; a disponibilidade é controlada manualmente na tela de mesas.
 * **CANCELED**: Permitido a partir de `RECEIVED`, `PREPARING` ou `READY`.
 
 ---
@@ -57,7 +57,7 @@ $$\text{RECEIVED} \longrightarrow \text{PREPARING} \longrightarrow \text{READY} 
 |:---|:---|:---|
 | `GET` | `/api/orders` | Retorna lista de pedidos ordenados por data (`?status=RECEIVED`, `?tableId=1`, `?type=DINE_IN`). |
 | `GET` | `/api/orders/:id` | Retorna o pedido completo com itens, adicionais escolhidos e mesa associada. |
-| `POST` | `/api/orders` | Cria novo pedido. Se for `DINE_IN`, atualiza a mesa para `OCCUPIED`. |
+| `POST` | `/api/orders` | Cria novo pedido. O status da mesa não é alterado automaticamente. |
 | `PATCH` | `/api/orders/:id/status` | Altera status validando transição via máquina de estados (`{ "status": "PREPARING" }`). |
 | `POST` | `/api/orders/:id/advance` | **Atalho KDS de 1-Clique**: Avança automaticamente o pedido para o próximo estágio natural. |
 | `GET` | `/api/orders/stream` | **Server-Sent Events (SSE)**: Conexão em tempo real. Dispara eventos `ORDER_CREATED` e `ORDER_UPDATED`. |
@@ -93,16 +93,25 @@ $$\text{RECEIVED} \longrightarrow \text{PREPARING} \longrightarrow \text{READY} 
 |:---|:---|:---|
 | `GET` | `/api/tables` | Lista todas as mesas, status (`AVAILABLE`, `OCCUPIED`, `RESERVED`) e pedidos em aberto. |
 | `GET` | `/api/tables/:id` | Detalhes da mesa com comanda ativa. |
-| `PATCH` | `/api/tables/:id/status` | Altera status manualmente (`{ "status": "AVAILABLE" }`). |
+| `POST` | `/api/tables` | Cadastra uma mesa (`number` e `capacity` inteiros positivos; capacidade padrão 4). |
+| `DELETE` | `/api/tables/:id` | Remove mesa livre; mesas ocupadas ou com pedidos ativos não podem ser removidas. |
+| `PATCH` | `/api/tables/:id` | Edita número, capacidade e/ou status manualmente. |
+| `PATCH` | `/api/tables/:id/status` | Alias compatível para atualização de status da mesa. |
+
+Na aba **Mesas & Recepção**, a conta pode cadastrar mesas definindo número e lugares, editar esses dados, controlar manualmente o status, remover mesas livres e abrir **Deixar na tela dos clientes** para uma mesa específica. O cabeçalho identifica a mesa; **Sair da tela** pede a senha validada no login. O modo bloqueado permanece após atualizar a página.
+
+Na tela do cliente, os itens são adicionados ao carrinho lateral, onde quantidades, adicionais, observações e total podem ser revisados antes de **Confirmar e enviar para a cozinha**. Após o envio, a aba **Meus Pedidos** acompanha o status por eventos SSE `ORDER_UPDATED`.
+
+Cada pedido tem sua própria conversa entre cliente e cozinha. A conversa fica disponível no cartão daquele pedido no KDS e na lista **Meus Pedidos**, é persistida no banco e atualizada em tempo real por SSE. A migration `20261108230000_order_chat` é aplicada com `npx prisma migrate deploy` no backend.
 
 ### 4.4. Cadastro de contas (planejado; ainda não implementado no backend)
-O schema Prisma e as rotas atuais não definem usuários nem cadastro de contas. A página `RegistrationPage` está preparada para o seguinte contrato futuro:
+O schema Prisma e as rotas atuais ainda não definem usuários nem autenticação. O cadastro e as senhas são armazenados localmente no navegador; as senhas são derivadas com PBKDF2 antes de serem salvas. Isso atende ao protótipo local, mas não substitui autenticação e autorização no servidor.
 
 | Método | Endpoint | Payload JSON esperado |
 |:---|:---|:---|
 | `POST` | `/api/auth/register` | `{ "name": "Nome completo", "email": "voce@exemplo.com", "password": "senha com pelo menos 8 caracteres" }` |
 
-A confirmação de senha é validada no navegador e não é enviada. O backend deverá validar os dados e armazenar a senha com hash antes de habilitar o cadastro.
+A confirmação de senha é validada no navegador. O endpoint de cadastro acima ainda não está implementado no backend.
 
 ---
 
@@ -120,7 +129,7 @@ my-node-project/frontend/src/
 │   ├── KDSPage.tsx            # TELA 1: Painel KDS (Kanban de 4 colunas + conexão SSE + avanço de 1 clique)
 │   ├── MenuPage.tsx           # TELA 2: Cardápio Digital (seletor de mesa, categorias e produtos)
 │   ├── OrderTrackingPage.tsx  # TELA 3: Comanda Digital (linha do tempo visual do pedido e extrato)
-│   ├── TablesPage.tsx         # TELA 4: Gestão do Salão (grid visual das mesas livres vs ocupadas)
+│   ├── TablesPage.tsx         # TELA 4: Gestão do Salão (CRUD de mesas e tela de cliente por mesa)
 │   └── RegistrationPage.tsx   # Formulário de conta; endpoint de cadastro pendente no backend
 ├── services/
 │   └── api.ts                 # Cliente HTTP centralizado e helper de subscrição SSE (subscribeToOrderStream)
@@ -154,11 +163,10 @@ O novo chat deve abrir a pasta `my-node-project/frontend`:
    * Pode adicionar efeitos visuais de alerta sonoro ao receber novo pedido e temporizadores de contagem regressiva por pedido.
 2. **`MenuPage.tsx` + `ModalOptionSelect.tsx` + `CartDrawer.tsx`**:
    * Já listam as categorias e produtos de `GET /api/categories`.
-   * Integrar o estado do carrinho global para que, ao clicar em "Personalizar", abra o `ModalOptionSelect`, adicione ao `CartDrawer` e dispare `api.createOrder(...)`.
+   * O cliente personaliza os adicionais, monta e revisa o carrinho lateral e confirma o envio para a cozinha com `api.createOrder(...)`.
 3. **`OrderTrackingPage.tsx`**:
    * Já possui a linha do tempo visual de 4 estágios (`RECEBIDO` ➔ `NA COZINHA` ➔ `PRONTO` ➔ `ENTREGUE`) e extrato da conta.
-   * Pode ser vinculado diretamente ao ID da última comanda criada pelo cliente.
+   * Recebe o pedido criado e acompanha atualizações de status via SSE.
 4. **`TablesPage.tsx`**:
-   * Já exibe o grid de mesas identificando mesas livres (`AVAILABLE`) e ocupadas (`OCCUPIED`).
-   * Pode adicionar ação de fechar comanda ou abrir comanda diretamente da mesa.
-
+   * Permite cadastrar e editar número/capacidade, controlar status manualmente e remover mesas disponíveis.
+   * Entregar/cancelar um pedido não altera automaticamente o status da mesa.

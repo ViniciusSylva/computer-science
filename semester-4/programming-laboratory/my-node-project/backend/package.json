@@ -1,5 +1,5 @@
 {
-  "name": "restaurant-saas-backend",
+  "name": "restaurant-management-backend",
   "version": "1.0.0",
   "description": "Backend Express + Prisma para Gestor de cardápio digital e Pedidos para Restaurantes",
   "main": "src/server.ts",

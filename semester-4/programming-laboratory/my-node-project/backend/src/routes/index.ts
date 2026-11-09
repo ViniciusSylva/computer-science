@@ -10,7 +10,7 @@ routes.get("/health", (req, res) => {
   res.json({
     status: "ok",
     timestamp: new Date().toISOString(),
-    service: "restaurant-saas-api",
+    service: "restaurant-management-api",
   });
 });
 
@@ -20,4 +20,3 @@ routes.use("/tables", tableRoutes);
 routes.use("/orders", orderRoutes);
 
 export default routes;
-

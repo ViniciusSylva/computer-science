@@ -1,5 +1,5 @@
 # ==============================================================================
-# RESTAURANT SAAS - DEPENDENCIES & REQUIREMENTS SPECIFICATION
+# RESTAURANT MANAGEMENT - DEPENDENCIES & REQUIREMENTS SPECIFICATION
 # ==============================================================================
 # Quick Install: Execute the command below from the project root:
 #   npm run install:all
