@@ -10,6 +10,7 @@
     "backend:dev": "npm --prefix backend run dev",
     "backend:migrate": "npm --prefix backend run prisma:migrate",
     "backend:seed": "npm --prefix backend run prisma:seed",
+    "backend:seed:demo": "npm --prefix backend run prisma:seed:demo",
     "backend:studio": "npm --prefix backend run prisma:studio",
     "backend:test": "npm --prefix backend run test",
     "frontend:dev": "npm --prefix frontend run dev",
