@@ -13,6 +13,15 @@ A full-stack application designed for end-to-end restaurant and kitchen operatio
 - Server-Sent Events (SSE)
 - Jest & Supertest
 
+## 🧪 Demo Data
+
+After starting PostgreSQL and applying the migrations, populate the menu with
+`npm run backend:seed` in a disposable demo database. This seed resets existing
+restaurant data. To add sample tables and customer orders without resetting
+existing records, run `npm run backend:seed:demo` from the project root. The
+demo seed is safe to repeat and creates orders in the `RECEIVED`, `PREPARING`,
+and `READY` stages.
+
 ## 🧠 What I learned
 - Modeling relational schemas with recursive options, historical pricing snapshots, and multi-table constraints using Prisma ORM.
 - Implementing a deterministic Order State Machine (`RECEIVED` → `PREPARING` → `READY` → `DELIVERED` / `CANCELED`) preventing illegal lifecycle transitions.
