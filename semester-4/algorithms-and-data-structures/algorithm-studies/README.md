@@ -1,5 +1,7 @@
 # Algorithm Studies: Quicksort Empirical Performance Analysis
 
+---
+
 This module contains an empirical study and performance benchmarking suite for the **Quicksort** algorithm, evaluating its execution time across various input sizes and verifying theoretical time complexity vs. observed real-world behavior.
 
 ## 📂 Directory Structure
